@@ -2,6 +2,7 @@
 
 ## Progress
 - [x] Phase 0: PRODUCT (2026-05-22)
+- [ ] Phase 0.5: FEASIBILITY
 - [x] Phase 1: DESIGN (2026-05-22)
 - [x] Phase 2: ARCHITECTURE (2026-05-22)
 - [x] Phase 3: IMPLEMENT (2026-05-24)
@@ -12,6 +13,8 @@
 > CHECKPOINT는 phase 리스트에서 제외 (ADR-009). cross-cutting trigger라
 > 사이드바 별도 KPI 카드에서 count만 추적.
 > REVIEW는 IMPLEMENT 후 SHIP 전 정식 phase로 박힘 (ADR-010, v0.5+).
+> FEASIBILITY는 PRODUCT↔DESIGN 사이 phase 0.5 (ADR-011, ADR-012). 실현가능성·의존성 검증, soft gate.
+> 이 프로젝트는 출시 후 0.5 신설이라 미완(pending) — 이력 정직성.
 
 ## Next action
 사이드바 정보 위계 정리 중 (TRIGGERS/ACTIVE FILE/CHECKPOINTS 제거, RECENT CHANGES 라벨 의미화).

@@ -4,6 +4,16 @@
 
 형식: [Keep a Changelog](https://keepachangelog.com/) + [Semantic Versioning](https://semver.org/).
 
+## [0.9.5] — 2026-06-05
+
+### Added (Phase 0.5 FEASIBILITY + 동적 phase)
+- **Phase 0.5 — FEASIBILITY 단계 신설** (ADR-011). PRODUCT↔DESIGN 사이에 실현가능성·의존성 검증 단계 추가. 각 JBT가 "구현 가능한가 / 무엇이 필요한가 / 근거는?"을 `docs/FEASIBILITY.md`에 ✅/⚠️/❌로 기록. **불확실한 것만 웹서칭**, ❌여도 차단 안 함(soft gate). `/blueprint` 스킬 + 템플릿에 반영.
+- **Spec 탭에 FEASIBILITY.md 폴더 추가** — 사이드바 Phase 0.5 클릭 시 가운데 webview에 FEASIBILITY 섹션 렌더.
+
+### Changed (동적 phase 리스트 — ADR-012)
+- **phase 식별자를 정수 union → key(문자열) + order(숫자)로 분리.** `PhaseId`(0~6)·`PHASE_NAMES` 상수 폐기. parser가 `Phase 0.5: FEASIBILITY` 같은 **소수 phase**를 인식 (정규식 `\d+(?:\.\d+)?`), 0~6 하드코딩 매핑/누락보강 루프 삭제. 앞으로 phase 추가·재배열이 **state.md 수정만으로** 사이드바·webview에 자동 반영.
+- 산출물 매핑을 phase **name 기반**으로 전환 (PRODUCT/FEASIBILITY/DESIGN/ARCHITECTURE → 각 .md).
+
 ## [0.9.4] — 2026-05-30
 
 ### Changed (디자인 리디자인 — 안 A "iOS Settings")

@@ -18,7 +18,6 @@ import * as path from 'path';
 import {
   SidebarPayload,
   Phase,
-  PhaseId,
   RecentChange,
   ActiveFileInfo,
   getProgress,
@@ -32,7 +31,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 
   constructor(
     private readonly extensionUri: vscode.Uri,
-    private readonly onPhaseClick: (phaseId: PhaseId) => void,
+    private readonly onPhaseClick: (phaseKey: string) => void,
   ) {}
 
   resolveWebviewView(
@@ -50,8 +49,8 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
     };
 
     view.webview.onDidReceiveMessage(msg => {
-      if (msg?.type === 'phase-click' && typeof msg.phaseId === 'number') {
-        this.onPhaseClick(msg.phaseId as PhaseId);
+      if (msg?.type === 'phase-click' && typeof msg.phaseKey === 'string') {
+        this.onPhaseClick(msg.phaseKey);
       }
     });
 
@@ -104,10 +103,10 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
   <div class="sidebar">${body}</div>
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
-    document.querySelectorAll('[data-phase-id]').forEach(el => {
+    document.querySelectorAll('[data-phase-key]').forEach(el => {
       el.addEventListener('click', () => {
-        const id = parseInt(el.getAttribute('data-phase-id'), 10);
-        if (!isNaN(id)) vscode.postMessage({ type: 'phase-click', phaseId: id });
+        const key = el.getAttribute('data-phase-key');
+        if (key) vscode.postMessage({ type: 'phase-click', phaseKey: key });
       });
     });
   </script>
@@ -158,7 +157,7 @@ function renderHero(
         <span class="hero-folder-path">${escapeHtml(folderPath)}</span>
       </div>
       <div class="hero-divider"></div>
-      <div class="hero-phase-id">PHASE ${active.id}</div>
+      <div class="hero-phase-id">PHASE ${escapeHtml(active.key)}</div>
       <h1 class="hero-title">${escapeHtml(active.name)}</h1>
       <div class="progress-bar">
         <div class="progress-fill" style="${progressFillStyle(percent)}"></div>
@@ -181,9 +180,9 @@ function renderPhases(phases: Phase[]): string {
 function renderPhaseRow(phase: Phase): string {
   const meta = phase.completedAt ?? phase.meta ?? '';
   return `
-    <div class="phase-row ${phase.status}" data-phase-id="${phase.id}">
+    <div class="phase-row ${phase.status}" data-phase-key="${escapeHtml(phase.key)}">
       <div class="phase-circle ${phase.status}"></div>
-      <span class="phase-id">P${phase.id}</span>
+      <span class="phase-id">P${escapeHtml(phase.key)}</span>
       <span class="phase-name">${escapeHtml(phase.name)}</span>
       <span class="phase-meta">${escapeHtml(meta)}</span>
     </div>`;
@@ -193,7 +192,7 @@ function renderCurrentFocus(nextAction: string, phases: Phase[]): string {
   const active =
     phases.find(p => p.status === 'in_progress') ??
     phases.find(p => p.status === 'pending');
-  const label = active ? `Phase ${active.id} · ${active.name}` : 'No active phase';
+  const label = active ? `Phase ${active.key} · ${active.name}` : 'No active phase';
 
   return `
     <div class="card">

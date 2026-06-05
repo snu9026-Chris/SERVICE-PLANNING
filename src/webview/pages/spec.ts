@@ -20,6 +20,7 @@ export interface SpecExtraFile {
 
 export interface SpecArtifacts {
   product: string | null;
+  feasibility: string | null;
   design: string | null;
   architecture: string | null;
   /** docs/adr/*.md 파일들 */
@@ -30,13 +31,14 @@ export interface SpecArtifacts {
 
 const FOLDER_LABELS: Record<string, string> = {
   product: 'PRODUCT.md',
+  feasibility: 'FEASIBILITY.md',
   design: 'DESIGN.md',
   architecture: 'ARCHITECTURE.md',
   adr: 'adr/',
   'design-gallery': 'design/screenshots/',
 };
 
-export type SpecFolderKey = 'product' | 'design' | 'architecture' | 'adr' | 'design-gallery';
+export type SpecFolderKey = 'product' | 'feasibility' | 'design' | 'architecture' | 'adr' | 'design-gallery';
 
 /**
  * `${folder}:${sectionId}` 형식. 예: "product:non-goals"
@@ -58,6 +60,7 @@ export function renderSpecPage(
 
   const folders: Array<[SpecFolderKey, MarkdownSection[]]> = [
     ['product', artifacts.product ? extractSections(artifacts.product) : []],
+    ['feasibility', artifacts.feasibility ? extractSections(artifacts.feasibility) : []],
     ['design', artifacts.design ? extractSections(artifacts.design) : []],
     ['architecture', artifacts.architecture ? extractSections(artifacts.architecture) : []],
     ['adr', adrSections],

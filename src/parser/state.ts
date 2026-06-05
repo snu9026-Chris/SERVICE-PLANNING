@@ -11,12 +11,10 @@
 import {
   BlueprintState,
   Phase,
-  PhaseId,
   PhaseStatus,
   Counters,
   Settings,
   DecisionEntry,
-  PHASE_NAMES,
 } from '../types';
 
 /**
@@ -59,26 +57,31 @@ function parseProjectName(md: string): string {
 }
 
 /**
- * Progress 섹션 → Phase[]
+ * Progress 섹션 → Phase[]  (ADR-012: 동적 리스트)
  * 형식 예:
  *   - [x] Phase 0: PRODUCT (2026-05-22)
+ *   - [ ] Phase 0.5: FEASIBILITY
  *   - [ ] Phase 1: DESIGN
- *   - [ ] Phase 4: CHECKPOINT (0 runs)
  *   - [ ] Phase 5: SHIP (0 ships)
  *
  * `[x]` = done, `[ ]` = pending, `[◐]` = in_progress
+ *
+ * 개수·이름·순서를 코드가 고정하지 않는다. state.md에 적힌 phase를 있는 그대로 읽고
+ * key(문자열)·order(숫자)로 보관. 정수 매핑/누락 보강 루프 없음 — 문서가 진실 원본.
+ * 단 CHECKPOINT는 별도 KPI라 제외 (ADR-009).
  */
 function parsePhases(text: string): Phase[] {
   const lines = text.split(/\r?\n/);
   const phases: Phase[] = [];
-  const re = /^-\s*\[([ x◐])\]\s*Phase\s+(\d+):\s*([A-Z\-]+)(?:\s*\((.*?)\))?(?:\s+←.*)?$/;
+  // Phase 키는 정수 또는 소수("0", "0.5"). 이름은 영문 대문자/하이픈.
+  const re = /^-\s*\[([ x◐])\]\s*Phase\s+(\d+(?:\.\d+)?):\s*([A-Z][A-Z\-]*)(?:\s*\((.*?)\))?(?:\s+←.*)?$/;
 
   for (const line of lines) {
     const m = line.trim().match(re);
     if (!m) continue;
 
     const checkChar = m[1];
-    const rawId = parseInt(m[2], 10);
+    const key = m[2];
     const name = m[3];
     const parenContent = m[4];
 
@@ -101,48 +104,25 @@ function parsePhases(text: string): Phase[] {
       }
     }
 
-    // 호환 매핑:
-    //  v0.5 schema (현재): 0=PRODUCT 1=DESIGN 2=ARCH 3=IMPL 4=REVIEW 5=SHIP 6=POST-SHIP
-    //  v0.2~v0.4 schema (옛): 0~3 동일, 4=SHIP, 5=POST-SHIP
-    //  v0.1 schema (옛옛): 0~3 동일, 4=CHECKPOINT(skip위), 5=SHIP, 6=POST-SHIP
-    let id: PhaseId;
-    if (rawId >= 0 && rawId <= 3) {
-      id = rawId as PhaseId;
-    } else if (rawId === 4 && name === 'REVIEW') {
-      id = 4; // v0.5 신규
-    } else if (rawId === 4 && name === 'SHIP') {
-      id = 5; // v0.2~v0.4 → v0.5 매핑
-    } else if (rawId === 5 && name === 'SHIP') {
-      id = 5; // v0.5 또는 v0.1 ship
-    } else if (rawId === 5 && name === 'POST-SHIP') {
-      id = 6; // v0.2~v0.4 → v0.5 매핑
-    } else if (rawId === 6 && name === 'POST-SHIP') {
-      id = 6; // v0.5 또는 v0.1
-    } else {
-      continue;
-    }
-
     phases.push({
-      id,
-      name: name || PHASE_NAMES[id],
+      key,
+      order: parseFloat(key),
+      name,
       status,
       completedAt,
       meta,
     });
   }
 
-  // Phase 0~6 누락 보강 (state.md에 없으면 pending으로)
-  for (let i = 0; i <= 6; i++) {
-    if (!phases.find(p => p.id === i)) {
-      phases.push({
-        id: i as PhaseId,
-        name: PHASE_NAMES[i as PhaseId],
-        status: 'pending',
-      });
-    }
-  }
-  phases.sort((a, b) => a.id - b.id);
-  return phases;
+  // 중복 key는 처음 것만 (방어적). order 기준 정렬.
+  const seen = new Set<string>();
+  const deduped = phases.filter(p => {
+    if (seen.has(p.key)) return false;
+    seen.add(p.key);
+    return true;
+  });
+  deduped.sort((a, b) => a.order - b.order);
+  return deduped;
 }
 
 /**

@@ -1,8 +1,8 @@
 ---
 name: blueprint
 description: |
-  신규 프로젝트 워크플로 오케스트레이터. 0)PRODUCT → 1)DESIGN → 2)ARCHITECTURE →
-  3)IMPLEMENT → 4)CHECKPOINT → 5)SHIP → 6)POST-SHIP 의 7-phase 파이프라인을 관리한다.
+  신규 프로젝트 워크플로 오케스트레이터. 0)PRODUCT → 0.5)FEASIBILITY → 1)DESIGN →
+  2)ARCHITECTURE → 3)IMPLEMENT → 4)CHECKPOINT → 5)SHIP → 6)POST-SHIP 의 파이프라인을 관리한다.
   각 phase는 기존 gstack 스킬(/office-hours, /design-consultation, /autoplan, /qa,
   /ship 등)에 위임한다. 직접 일하지 않고 라우터 역할만 한다.
 
@@ -11,8 +11,8 @@ description: |
   - 진행 중 재개: `/blueprint` (resume mode)
   - 중간 점검: `/blueprint check`
 
-  Auto-scaffolds: docs/PRODUCT.md, docs/DESIGN.md, docs/ARCHITECTURE.md,
-  docs/adr/, plans/, .blueprint/state.md, CLAUDE.md.
+  Auto-scaffolds: docs/PRODUCT.md, docs/FEASIBILITY.md, docs/DESIGN.md,
+  docs/ARCHITECTURE.md, docs/adr/, plans/, .blueprint/state.md, CLAUDE.md.
 allowed-tools:
   - Read
   - Write
@@ -23,6 +23,8 @@ allowed-tools:
   - AskUserQuestion
   - TodoWrite
   - Skill
+  - WebSearch
+  - WebFetch
 ---
 
 # /blueprint — Development workflow orchestrator
@@ -86,6 +88,7 @@ SKILL_DIR=~/.claude/skills/blueprint/templates
 각 템플릿 복사 + 치환:
 - `$SKILL_DIR/state.md.tmpl` → `.blueprint/state.md`
 - `$SKILL_DIR/PRODUCT.md.tmpl` → `docs/PRODUCT.md`
+- `$SKILL_DIR/FEASIBILITY.md.tmpl` → `docs/FEASIBILITY.md`
 - `$SKILL_DIR/DESIGN.md.tmpl` → `docs/DESIGN.md`
 - `$SKILL_DIR/ARCHITECTURE.md.tmpl` → `docs/ARCHITECTURE.md`
 - `$SKILL_DIR/roadmap.md.tmpl` → `plans/roadmap.md`
@@ -119,7 +122,8 @@ TodoWrite 안 보일 수 있으니 state.md 프리뷰 핀 안내 반드시 같�
 다음 단계:
 1. Antigravity에서 `.blueprint/state.md` 열고 Ctrl+Shift+V → 탭 고정 (필수)
 2. /office-hours 호출해 docs/PRODUCT.md 채우기
-3. 끝나면 /blueprint 다시 호출 → Phase 1로 진행
+3. 끝나면 /blueprint 다시 호출 → Phase 0.5 FEASIBILITY (실현가능성·의존성 검증)
+4. 그 다음 Phase 1 DESIGN으로 진행
 ```
 
 ---
@@ -215,12 +219,40 @@ state.md 직접 편집:
 | Phase | Sub-skill | Output | Hard gate |
 |---|---|---|---|
 | 0 | `/office-hours` | `docs/PRODUCT.md` | — |
-| 1 | `/design-consultation` + **UI Composition 인터뷰** | `docs/DESIGN.md` (UI Composition Decisions 섹션 채워짐) | PRODUCT.md non-empty |
+| 0.5 | (직접 — 아래 FEASIBILITY 절차) | `docs/FEASIBILITY.md` | PRODUCT.md non-empty |
+| 1 | `/design-consultation` + **UI Composition 인터뷰** | `docs/DESIGN.md` (UI Composition Decisions 섹션 채워짐) | PRODUCT.md non-empty, **FEASIBILITY.md soft-gate (비어있으면 경고만)** |
 | 2 | `/autoplan` (CEO+Design+Eng 묶음) | `docs/ARCHITECTURE.md` + `plans/*.md` | PRODUCT.md non-empty, **DESIGN.md UI Composition 비어있지 않음** |
 | 3 | (코딩) — 필요시 `/investigate`, `/codex` | source code | **PRODUCT + ARCHITECTURE non-empty + UI Composition non-empty** |
 | 4 | `/code-review` + `/retro` | `docs/adr/`, checkpoint 파일 | — |
 | 5 | `/qa` → `/review` → `/ship` | merged PR | tests pass |
 | 6 | `/land-and-deploy` → `/document-release` → `/retro` | deployed app | shipped |
+
+### FEASIBILITY 절차 — Phase 0.5 (의존성·실현가능성 검증, ADR-011)
+
+PRODUCT 다음, DESIGN 전. sub-skill 없이 /blueprint가 직접 수행. 목적: 각 JBT가
+*구현 가능한가 / 무엇이 필요한가 / 근거는?* 를 `docs/FEASIBILITY.md`에 박는다.
+
+핵심 규칙 (ADR-011):
+- **차단하지 않는다 (soft gate).** ❌가 나와도 기록만 하고 진행. 최종 판단은 사용자.
+- **불확실한 것만 웹서칭.** Claude가 이미 아는 흔한 스택(React/FastAPI/VS Code API 등)은
+  지식으로 ✅ 판정. 애매·최신·니치·가격 변동 가능한 API만 WebSearch/WebFetch로 실제 확인.
+
+절차:
+1. `docs/PRODUCT.md`의 Jobs-to-be-done 목록을 읽는다.
+2. 각 JBT마다 판정: ✅ 가능 / ⚠️ 조건부 / ❌ 불가. 필요한 도구·API·라이브러리 적시.
+3. 판정이 **불확실한 항목만** 골라 WebSearch로 실존·버전·제약·비용 확인 → 근거 링크 확보.
+   (확실한 건 검색 생략 — 단계가 무거워지지 않게.)
+4. `docs/FEASIBILITY.md` 작성:
+   - Feasibility matrix (JBT별 가능여부 + 필요 도구 + 근거)
+   - 외부 의존성 요약 (버전·비용·리스크)
+   - 검증 메모 (웹서칭한 것만)
+   - ⚠️/❌ 항목의 대안/scope-out 검토
+   - 종합 판정 (권고일 뿐 — 차단 안 함)
+   - 상단 `placeholder-anchor` 주석 줄 **삭제** (작성 완료 표시)
+5. ⚠️/❌ 항목이 있으면 사용자에게 단일 안내 (질문 아님, 정보 제공):
+   > FEASIBILITY 결과: ✅ N개 / ⚠️ M개 / ❌ K개. ❌·⚠️ 항목은 docs/FEASIBILITY.md 참고.
+   > 진행 막지 않습니다 — 그대로 갈지, scope 조정할지는 판단해 주세요.
+6. state.md / roadmap.md의 Phase 0.5 체크 갱신 → 다음은 Phase 1.
 
 ### UI Composition 인터뷰 — Phase 1 안의 필수 sub-step (Anti-게으른 디자인)
 
@@ -259,6 +291,25 @@ ARCH_OK=$([ -s docs/ARCHITECTURE.md ] && grep -q -v "^>" docs/ARCHITECTURE.md &&
 ```
 
 코드 작업 거부.
+
+## Soft gate: Phase 1(DESIGN) 진입 시 FEASIBILITY 검사 (ADR-011)
+
+Phase 1로 들어가기 직전, **차단하지 않는 경고**:
+
+```bash
+FEAS_OK=$([ -s docs/FEASIBILITY.md ] && ! grep -q "placeholder-anchor" docs/FEASIBILITY.md && echo yes || echo no)
+```
+
+`FEAS_OK=no`면 (파일 없거나 템플릿 그대로):
+```
+⚠️ FEASIBILITY 미작성.
+docs/FEASIBILITY.md 가 비어있습니다 (Phase 0.5 건너뜀).
+구현가능성·의존성 검증 없이 DESIGN으로 진행해도 되지만, 권장하지 않습니다.
+지금 Phase 0.5를 채울까요, 그냥 진행할까요?
+```
+
+→ AskUserQuestion 단일 질문 (A: Phase 0.5 지금 / B: 그냥 DESIGN 진행).
+**B를 골라도 막지 않는다.** PRODUCT/ARCHITECTURE의 hard gate와 다른 점 = 차단 없음.
 
 ---
 

@@ -3,6 +3,7 @@ out/
 .vscode-test/
 .DS_Store
 *.log
+.claude/
 # Note: *.vsix는 빌드 결과물이지만 V0+ dogfooding 동안 git에 포함시켜
 # 다른 컴퓨터에서 빠르게 다운로드 + 설치할 수 있게 함.
 # V1 ship 시 GitHub Releases로 전환 + 다시 .gitignore에 추가 권고.

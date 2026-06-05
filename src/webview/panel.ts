@@ -18,7 +18,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { BlueprintState, PhaseId } from '../types';
+import { BlueprintState } from '../types';
 import { renderPlanPage } from './pages/plan';
 import { renderSpecPage, SpecArtifacts, SpecActiveSelection, SpecFolderKey } from './pages/spec';
 import { renderPreviewPage, PreviewContent, PreviewDesignFile } from './pages/preview';
@@ -53,7 +53,7 @@ export class BlueprintWebviewPanel {
   // 페이지별 데이터 캐시
   private currentState: BlueprintState | null = null;
   private roadmapMd: string | null = null;
-  private specArtifacts: SpecArtifacts = { product: null, design: null, architecture: null };
+  private specArtifacts: SpecArtifacts = { product: null, feasibility: null, design: null, architecture: null };
   private specFocus?: SpecFolderKey;
   private specActive?: SpecActiveSelection;
   private preview: PreviewContent = { html: null, sourcePath: null, pushedAt: null };
@@ -140,8 +140,9 @@ export class BlueprintWebviewPanel {
   }
 
   /** Phase 클릭 시 — Spec 탭으로 이동 + 해당 폴더 자동 펼침 */
-  async showArtifact(phaseId: PhaseId): Promise<void> {
-    const section = artifactSectionForPhase(phaseId);
+  async showArtifact(phaseKey: string): Promise<void> {
+    const phase = this.currentState?.phases.find(p => p.key === phaseKey);
+    const section = artifactFolderForPhaseName(phase?.name);
     this.specFocus = section;
     this.specActive = undefined; // 폴더의 첫 섹션으로 리셋
     this.activeTab = 'spec';
@@ -353,12 +354,16 @@ export class BlueprintWebviewPanel {
 
 // ─────────────────────────────────────────────────────────────────
 
-function artifactSectionForPhase(phaseId: PhaseId): 'product' | 'design' | 'architecture' | undefined {
-  // Phase 0~2: 산출물 .md 명확. Phase 3 (IMPLEMENT) / 4 (SHIP) / 5 (POST-SHIP) 는 상세 .md 없음.
-  switch (phaseId) {
-    case 0: return 'product';
-    case 1: return 'design';
-    case 2: return 'architecture';
+/**
+ * phase 이름 → spec 탭 폴더 매핑 (ADR-012: id 숫자 대신 name 기반).
+ * 산출물 .md가 있는 phase만 매핑. IMPLEMENT/REVIEW/SHIP/POST-SHIP은 상세 .md 없음 → undefined.
+ */
+function artifactFolderForPhaseName(name: string | undefined): SpecFolderKey | undefined {
+  switch (name) {
+    case 'PRODUCT': return 'product';
+    case 'FEASIBILITY': return 'feasibility';
+    case 'DESIGN': return 'design';
+    case 'ARCHITECTURE': return 'architecture';
     default: return undefined;
   }
 }

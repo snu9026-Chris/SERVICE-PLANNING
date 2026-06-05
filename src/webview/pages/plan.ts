@@ -1,12 +1,12 @@
 /**
  * Plan 페이지 — plans/roadmap.md 풀-너비 렌더 + state.md 현재 위치 강조.
  *
- * 데이터: roadmap.md (체크리스트) + currentPhaseId (현재 phase 강조용)
+ * 데이터: roadmap.md (체크리스트) + state.phases (현재 phase 강조용)
  * 시각: 큰 헤더 + Phase 카드들 (현재 phase는 파란 테두리 + 배경)
  */
 
 import { renderChecklistMarkdown, escapeHtml } from '../shared';
-import { BlueprintState, PHASE_NAMES, getProgress } from '../../types';
+import { BlueprintState, getProgress } from '../../types';
 
 export function renderPlanPage(
   state: BlueprintState | null,
@@ -50,7 +50,7 @@ function renderHero(state: BlueprintState): string {
       <div class="page-eyebrow">PLAN · ROADMAP</div>
       <h1 class="page-title">${escapeHtml(state.project)}</h1>
       <p class="page-subtitle">
-        지금 <strong>Phase ${active.id} · ${escapeHtml(active.name)}</strong> 진행 중
+        지금 <strong>Phase ${active.key} · ${escapeHtml(active.name)}</strong> 진행 중
         · ${done}/${total} phases (${percent}%)
       </p>
       <div class="hero-progress">

@@ -3,23 +3,16 @@
  * 이벤트 버스의 payload 시그니처가 곧 도메인 간 계약.
  */
 
-// Phase 7개 (v0.5+ schema, ADR-010): REVIEW를 IMPLEMENT와 SHIP 사이에 박음.
+// Phase는 동적 리스트 (ADR-012): 개수·이름·순서를 코드가 고정하지 않고
+// state.md에 적힌 그대로 읽는다. 정수 union(PhaseId)·PHASE_NAMES 상수는 폐기.
 // CHECKPOINT는 그대로 phase 리스트에서 제외 (ADR-009) — 사이드바 KPI 카드.
-export type PhaseId = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 export type PhaseStatus = 'pending' | 'in_progress' | 'done';
 
-export const PHASE_NAMES: Record<PhaseId, string> = {
-  0: 'PRODUCT',
-  1: 'DESIGN',
-  2: 'ARCHITECTURE',
-  3: 'IMPLEMENT',
-  4: 'REVIEW',
-  5: 'SHIP',
-  6: 'POST-SHIP',
-};
-
 export interface Phase {
-  id: PhaseId;
+  /** state.md "Phase X"의 X를 문자열로. "0", "0.5", "1" ... 클릭 식별·data 속성용. */
+  key: string;
+  /** 정렬·진행도용 숫자. parseFloat(key). "0.5" → 0.5 */
+  order: number;
   name: string;
   status: PhaseStatus;
   /** 완료된 경우 날짜 (YYYY-MM-DD) */
@@ -124,7 +117,7 @@ export interface SidebarPayload {
  * 현재 활성 phase 결정 규칙:
  * - in_progress가 있으면 그것
  * - 없으면 마지막 done의 다음 phase (pending 첫 번째)
- * - 다 done이면 마지막 phase (6)
+ * - 다 done이면 마지막 phase
  */
 export function getActivePhase(state: BlueprintState): Phase {
   const inProgress = state.phases.find(p => p.status === 'in_progress');

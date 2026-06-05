@@ -21,7 +21,6 @@ import { SidebarViewProvider, SIDEBAR_VIEW_ID } from './sidebar/sidebar-view-pro
 import { BlueprintWebviewPanel, TabId } from './webview/panel';
 import { ERROR_HISTORY_TEMPLATE } from './webview/pages/errors';
 import {
-  PhaseId,
   FileChangeEvent,
   BlueprintState,
   SidebarPayload,
@@ -38,6 +37,7 @@ const RELATIVE_PATHS = {
   state: '.blueprint/state.md',
   roadmap: 'plans/roadmap.md',
   product: 'docs/PRODUCT.md',
+  feasibility: 'docs/FEASIBILITY.md',
   design: 'docs/DESIGN.md',
   architecture: 'docs/ARCHITECTURE.md',
   errorHistory: 'docs/error.history.md',
@@ -57,8 +57,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // ── Sidebar Webview Provider ──
   sidebarProvider = new SidebarViewProvider(
     vscode.Uri.file(context.extensionPath),
-    (phaseId: PhaseId) => {
-      void webviewPanel?.showArtifact(phaseId);
+    (phaseKey: string) => {
+      void webviewPanel?.showArtifact(phaseKey);
     },
   );
   context.subscriptions.push(
@@ -92,8 +92,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
     vscode.commands.registerCommand(
       'blueprint.showArtifact',
-      async (phaseId: PhaseId) => {
-        await webviewPanel?.showArtifact(phaseId);
+      async (phaseKey: string) => {
+        await webviewPanel?.showArtifact(phaseKey);
       },
     ),
     vscode.commands.registerCommand(
@@ -138,6 +138,9 @@ async function handleFileChange(event: FileChangeEvent): Promise<void> {
     case RELATIVE_PATHS.product:
       await reloadArtifact('product');
       break;
+    case RELATIVE_PATHS.feasibility:
+      await reloadArtifact('feasibility');
+      break;
     case RELATIVE_PATHS.design:
       await reloadArtifact('design');
       break;
@@ -172,6 +175,7 @@ async function loadAll(): Promise<void> {
     reloadState(),
     reloadRoadmap(),
     reloadArtifact('product'),
+    reloadArtifact('feasibility'),
     reloadArtifact('design'),
     reloadArtifact('architecture'),
     reloadErrorHistory(),
@@ -271,7 +275,7 @@ async function reloadRoadmap(): Promise<void> {
   webviewPanel?.setRoadmap(md);
 }
 
-async function reloadArtifact(kind: 'product' | 'design' | 'architecture'): Promise<void> {
+async function reloadArtifact(kind: 'product' | 'feasibility' | 'design' | 'architecture'): Promise<void> {
   if (!currentFolder) return;
   const relPath = RELATIVE_PATHS[kind];
   const md = await readFileSafe(currentFolder, relPath);
