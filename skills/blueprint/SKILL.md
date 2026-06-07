@@ -2,7 +2,7 @@
 name: blueprint
 description: |
   신규 프로젝트 워크플로 오케스트레이터. 0)PRODUCT → 0.5)FEASIBILITY → 1)DESIGN →
-  2)ARCHITECTURE → 3)IMPLEMENT → 4)CHECKPOINT → 5)SHIP → 6)POST-SHIP 의 파이프라인을 관리한다.
+  2)ARCHITECTURE → 3)IMPLEMENT → 4)REVIEW → 4.5)UX-REVIEW → 5)SHIP → 6)POST-SHIP 의 파이프라인을 관리한다.
   각 phase는 기존 gstack 스킬(/office-hours, /design-consultation, /autoplan, /qa,
   /ship 등)에 위임한다. 직접 일하지 않고 라우터 역할만 한다.
 
@@ -12,7 +12,7 @@ description: |
   - 중간 점검: `/blueprint check`
 
   Auto-scaffolds: docs/PRODUCT.md, docs/FEASIBILITY.md, docs/DESIGN.md,
-  docs/ARCHITECTURE.md, docs/adr/, plans/, .blueprint/state.md, CLAUDE.md.
+  docs/ARCHITECTURE.md, docs/UX-QUALITY.md, docs/adr/, plans/, .blueprint/state.md, CLAUDE.md.
 allowed-tools:
   - Read
   - Write
@@ -91,6 +91,7 @@ SKILL_DIR=~/.claude/skills/blueprint/templates
 - `$SKILL_DIR/FEASIBILITY.md.tmpl` → `docs/FEASIBILITY.md`
 - `$SKILL_DIR/DESIGN.md.tmpl` → `docs/DESIGN.md`
 - `$SKILL_DIR/ARCHITECTURE.md.tmpl` → `docs/ARCHITECTURE.md`
+- `$SKILL_DIR/UX-QUALITY.md.tmpl` → `docs/UX-QUALITY.md`
 - `$SKILL_DIR/roadmap.md.tmpl` → `plans/roadmap.md`
 - `$SKILL_DIR/adr/ADR-template.md` → `docs/adr/ADR-template.md`
 - `$SKILL_DIR/plans/feature.md.tmpl` → `plans/_template.md`
@@ -224,7 +225,8 @@ state.md 직접 편집:
 | 2 | `/autoplan` (CEO+Design+Eng 묶음) | `docs/ARCHITECTURE.md` + `plans/*.md` | PRODUCT.md non-empty, **DESIGN.md UI Composition 비어있지 않음** |
 | 3 | (코딩) — 필요시 `/investigate`, `/codex` | source code | **PRODUCT + ARCHITECTURE non-empty + UI Composition non-empty** |
 | 4 | `/code-review` + `/retro` | `docs/adr/`, checkpoint 파일 | — |
-| 5 | `/qa` → `/review` → `/ship` | merged PR | tests pass |
+| 4.5 | (직접 — 아래 UX-REVIEW 절차) + `/design-review` 위임 | `docs/UX-QUALITY.md` | IMPLEMENT 완료 |
+| 5 | `/qa` → `/review` → `/ship` | merged PR | tests pass, **UX-QUALITY.md soft-gate (비어있으면 경고만)** |
 | 6 | `/land-and-deploy` → `/document-release` → `/retro` | deployed app | shipped |
 
 ### FEASIBILITY 절차 — Phase 0.5 (의존성·실현가능성 검증, ADR-011)
@@ -253,6 +255,34 @@ PRODUCT 다음, DESIGN 전. sub-skill 없이 /blueprint가 직접 수행. 목적
    > FEASIBILITY 결과: ✅ N개 / ⚠️ M개 / ❌ K개. ❌·⚠️ 항목은 docs/FEASIBILITY.md 참고.
    > 진행 막지 않습니다 — 그대로 갈지, scope 조정할지는 판단해 주세요.
 6. state.md / roadmap.md의 Phase 0.5 체크 갱신 → 다음은 Phase 1.
+
+### UX-REVIEW 절차 — Phase 4.5 (제품·사용성 품질 게이트, ADR-013)
+
+REVIEW(4, 코드 리뷰) 다음, SHIP(5) 전. 목적: "이 제품이 *잘 쓰이게* 만들어졌는가"를
+차원별 0~10으로 채점 → `docs/UX-QUALITY.md`. 개발 품질이 아니라 **제품·UX 품질**.
+
+핵심 규칙 (ADR-013):
+- **차단하지 않는다 (soft gate).** 점수 낮아도 기록만. 최종 판단은 사용자.
+- **자가채점 + 기존 스킬 혼용.** 새 루브릭은 기존 스킬이 안 보는 차원만 담당:
+  사용자 여정·인지부하·기능 연계·접근성·**다중사용자 상호작용**.
+  시각 디테일은 `/design-review`(라이브) 또는 `/plan-design-review`(계획) 결과를 참조하고
+  **재채점하지 않는다** (중복 방지).
+- **다중사용자 섹션은 조건부.** PRODUCT.md NON-GOALS에 "팀 협업 없음/1인용"이 있거나
+  단일 사용자 앱이면 섹션 전체를 "N/A — 단일 사용자"로 접는다. 다중사용자 앱이면 풀 전개.
+
+절차:
+1. `docs/PRODUCT.md` JBT + NON-GOALS를 읽는다 (다중사용자 여부 판정).
+2. 핵심 루브릭 8개 차원 0~10 자가채점 (여정 명확성·인지부하·일관성·피드백·오류복구·
+   기능연계·접근성·첫사용경험). 각 차원에 근거·마찰점·개선안 기재.
+3. 사용자 여정 워크스루: 각 JBT를 실제 클릭 흐름으로 따라가 마찰점·단계 수 기록.
+4. **다중사용자면** M1~M6 채점 + 시나리오 워크스루(동시편집·권한·알림전파·충돌)를
+   2~3인 가정으로 손으로 시뮬레이션. 단일 사용자면 섹션 N/A 표기.
+5. 시각 품질이 미점검이면 `/design-review` 위임 (라이브 사이트 있을 때). 결과는 참조만.
+6. `docs/UX-QUALITY.md` 작성 + 상단 `placeholder-anchor` 주석 줄 **삭제**.
+7. ❌(0~3)·⚠️(4~6) 항목 있으면 단일 안내 (질문 아님, 정보 제공):
+   > UX-QUALITY 결과: 평균 N/10. ❌ K개, ⚠️ M개는 docs/UX-QUALITY.md 참고.
+   > 진행 막지 않습니다 — SHIP 전 고칠지, 백로그로 둘지 판단해 주세요.
+8. state.md / roadmap.md의 Phase 4.5 체크 갱신 → 다음은 Phase 5 SHIP.
 
 ### UI Composition 인터뷰 — Phase 1 안의 필수 sub-step (Anti-게으른 디자인)
 
@@ -310,6 +340,25 @@ docs/FEASIBILITY.md 가 비어있습니다 (Phase 0.5 건너뜀).
 
 → AskUserQuestion 단일 질문 (A: Phase 0.5 지금 / B: 그냥 DESIGN 진행).
 **B를 골라도 막지 않는다.** PRODUCT/ARCHITECTURE의 hard gate와 다른 점 = 차단 없음.
+
+## Soft gate: Phase 5(SHIP) 진입 시 UX-QUALITY 검사 (ADR-013)
+
+SHIP로 들어가기 직전, **차단하지 않는 경고**:
+
+```bash
+UX_OK=$([ -s docs/UX-QUALITY.md ] && ! grep -q "placeholder-anchor" docs/UX-QUALITY.md && echo yes || echo no)
+```
+
+`UX_OK=no`면 (파일 없거나 템플릿 그대로):
+```
+⚠️ UX-QUALITY 미작성.
+docs/UX-QUALITY.md 가 비어있습니다 (Phase 4.5 건너뜀).
+제품·사용성 품질 점검 없이 SHIP해도 되지만, 권장하지 않습니다.
+지금 Phase 4.5를 채울까요, 그냥 SHIP할까요?
+```
+
+→ AskUserQuestion 단일 질문 (A: Phase 4.5 지금 / B: 그냥 SHIP 진행).
+**B를 골라도 막지 않는다.** (tests pass 같은 hard gate와 구분 = 차단 없음.)
 
 ---
 

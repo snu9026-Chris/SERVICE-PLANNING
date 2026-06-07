@@ -40,6 +40,7 @@ const RELATIVE_PATHS = {
   feasibility: 'docs/FEASIBILITY.md',
   design: 'docs/DESIGN.md',
   architecture: 'docs/ARCHITECTURE.md',
+  uxQuality: 'docs/UX-QUALITY.md',
   errorHistory: 'docs/error.history.md',
 };
 
@@ -147,6 +148,9 @@ async function handleFileChange(event: FileChangeEvent): Promise<void> {
     case RELATIVE_PATHS.architecture:
       await reloadArtifact('architecture');
       break;
+    case RELATIVE_PATHS.uxQuality:
+      await reloadArtifact('uxQuality');
+      break;
     case RELATIVE_PATHS.errorHistory:
       await reloadErrorHistory();
       break;
@@ -178,6 +182,7 @@ async function loadAll(): Promise<void> {
     reloadArtifact('feasibility'),
     reloadArtifact('design'),
     reloadArtifact('architecture'),
+    reloadArtifact('uxQuality'),
     reloadErrorHistory(),
     reloadDesignFiles(),
     reloadSpecExtras(),
@@ -275,7 +280,7 @@ async function reloadRoadmap(): Promise<void> {
   webviewPanel?.setRoadmap(md);
 }
 
-async function reloadArtifact(kind: 'product' | 'feasibility' | 'design' | 'architecture'): Promise<void> {
+async function reloadArtifact(kind: 'product' | 'feasibility' | 'design' | 'architecture' | 'uxQuality'): Promise<void> {
   if (!currentFolder) return;
   const relPath = RELATIVE_PATHS[kind];
   const md = await readFileSafe(currentFolder, relPath);

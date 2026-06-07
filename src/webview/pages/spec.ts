@@ -23,6 +23,7 @@ export interface SpecArtifacts {
   feasibility: string | null;
   design: string | null;
   architecture: string | null;
+  uxQuality: string | null;
   /** docs/adr/*.md 파일들 */
   adrFiles?: SpecExtraFile[];
   /** docs/design/screenshots/*.html 파일들 */
@@ -34,11 +35,12 @@ const FOLDER_LABELS: Record<string, string> = {
   feasibility: 'FEASIBILITY.md',
   design: 'DESIGN.md',
   architecture: 'ARCHITECTURE.md',
+  'ux-quality': 'UX-QUALITY.md',
   adr: 'adr/',
   'design-gallery': 'design/screenshots/',
 };
 
-export type SpecFolderKey = 'product' | 'feasibility' | 'design' | 'architecture' | 'adr' | 'design-gallery';
+export type SpecFolderKey = 'product' | 'feasibility' | 'design' | 'architecture' | 'ux-quality' | 'adr' | 'design-gallery';
 
 /**
  * `${folder}:${sectionId}` 형식. 예: "product:non-goals"
@@ -63,6 +65,7 @@ export function renderSpecPage(
     ['feasibility', artifacts.feasibility ? extractSections(artifacts.feasibility) : []],
     ['design', artifacts.design ? extractSections(artifacts.design) : []],
     ['architecture', artifacts.architecture ? extractSections(artifacts.architecture) : []],
+    ['ux-quality', artifacts.uxQuality ? extractSections(artifacts.uxQuality) : []],
     ['adr', adrSections],
     // design-gallery는 별도 — 섹션이 아닌 파일들. 트리에 표시는 빈 배열로 (특수 처리)
     ['design-gallery', []],

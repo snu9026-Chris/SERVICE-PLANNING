@@ -53,7 +53,7 @@ export class BlueprintWebviewPanel {
   // 페이지별 데이터 캐시
   private currentState: BlueprintState | null = null;
   private roadmapMd: string | null = null;
-  private specArtifacts: SpecArtifacts = { product: null, feasibility: null, design: null, architecture: null };
+  private specArtifacts: SpecArtifacts = { product: null, feasibility: null, design: null, architecture: null, uxQuality: null };
   private specFocus?: SpecFolderKey;
   private specActive?: SpecActiveSelection;
   private preview: PreviewContent = { html: null, sourcePath: null, pushedAt: null };
@@ -364,6 +364,7 @@ function artifactFolderForPhaseName(name: string | undefined): SpecFolderKey | u
     case 'FEASIBILITY': return 'feasibility';
     case 'DESIGN': return 'design';
     case 'ARCHITECTURE': return 'architecture';
+    case 'UX-REVIEW': return 'ux-quality';
     default: return undefined;
   }
 }

@@ -4,6 +4,15 @@
 
 형식: [Keep a Changelog](https://keepachangelog.com/) + [Semantic Versioning](https://semver.org/).
 
+## [0.9.6] — 2026-06-07
+
+### Added (Phase 4.5 UX-REVIEW — 제품·UX 품질 게이트)
+- **Phase 4.5 — UX-REVIEW 단계 신설** (ADR-013). REVIEW(코드)↔SHIP 사이에 **제품·사용성 품질** 게이트 추가. 엔지니어링 품질(gstack `/code-review`·`/qa`)과 대칭으로, "이 제품이 잘 쓰이게 만들어졌나"를 차원별 0~10 채점 → `docs/UX-QUALITY.md`.
+  - 핵심 루브릭 8차원: 사용자 여정·인지부하·일관성(IA)·피드백/가시성·오류복구·기능 연계·접근성·첫 사용 경험.
+  - **다중사용자 섹션 (조건부)**: 다중사용자 앱이면 동시성·권한·알림 전파·충돌 해결·소셜 다이내믹을 시나리오 워크스루로 점검. 단일 사용자 앱이면 N/A로 접음.
+  - 채점은 Claude 자가채점 + 시각 품질은 `/design-review` 위임(중복 채점 방지). soft gate — 점수 낮아도 차단 안 함.
+- **Spec 탭에 UX-QUALITY.md 폴더 추가** — 사이드바 Phase 4.5 클릭 시 가운데 webview에 렌더. ADR-012 동적 phase 덕에 parser는 코드 변경 없이 `Phase 4.5`를 4와 5 사이로 자동 수용 (설계 효과 검증됨).
+
 ## [0.9.5] — 2026-06-05
 
 ### Added (Phase 0.5 FEASIBILITY + 동적 phase)
