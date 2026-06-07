@@ -7,7 +7,7 @@
 - [x] Phase 2: ARCHITECTURE (2026-05-22)
 - [x] Phase 3: IMPLEMENT (2026-05-24)
 - [x] Phase 4: REVIEW (checkpoint 1회 + ad-hoc, 2026-05-24)
-- [ ] Phase 4.5: UX-REVIEW
+- [x] Phase 4.5: UX-REVIEW (시범 채점 7.4/10, 2026-06-07)
 - [x] Phase 5: SHIP (v0.1.0, 2026-05-24)
 - [x] Phase 6: POST-SHIP (2026-05-24)
 
@@ -29,6 +29,7 @@
 - 2026-05-22: ADR-006~007 (멀티탭 webview, 사이드바 webview 전환)
 - 2026-05-24: ADR-008 (마크다운 자동 가공 파이프라인)
 - 2026-05-24: Phase 4 checkpoint 1회 완료 — checkpoint-2026-05-24.md
+- 2026-06-07: Phase 4.5 UX-REVIEW 시범 1회 — 평균 7.4/10, ❌ 0건, SHIP 권고. 백로그 3건(a11y 키보드, phase-click affordance, JBT3 트리거 배지). docs/UX-QUALITY.md
 
 ## Counters
 - ships_since_checkpoint: 1
