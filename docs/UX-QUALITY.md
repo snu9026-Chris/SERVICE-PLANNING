@@ -64,4 +64,4 @@ PRODUCT.md NON-GOALS "팀 협업 기능 없음. 1인용." + Target user "솔로 
 ## 위임 기록 (중복 채점 방지)
 - 시각 디자인 품질(대비·여백·타이포·위계): /design-review 결과 참조 — 여기선 재채점 X
 - 코드/성능 자동검사: /code-review·tsc 통과 (v0.9.6) 참조
-- 비고: renderCheckpointKpi/renderTriggers/renderActiveFile/shortPath는 현재 미사용(dead code) — 코드 품질 항목, /code-review 영역
+- 비고: renderCheckpointKpi/renderTriggers/renderActiveFile/shortPath dead code 제거 완료 (2026-06-07, tsc 통과)

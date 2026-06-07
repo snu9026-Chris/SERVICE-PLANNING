@@ -19,7 +19,6 @@ import {
   SidebarPayload,
   Phase,
   RecentChange,
-  ActiveFileInfo,
   getProgress,
 } from '../types';
 
@@ -202,58 +201,6 @@ function renderCurrentFocus(nextAction: string, phases: Phase[]): string {
     </div>`;
 }
 
-function renderCheckpointKpi(state: NonNullable<SidebarPayload['state']>): string {
-  const { checkpoint_count, last_check, ships_since_checkpoint } = state.counters;
-  const dueSoon = ships_since_checkpoint >= 5;
-  return `
-    <div class="card ${dueSoon ? 'card-alert' : ''}">
-      <div class="card-heading">CHECKPOINTS</div>
-      <div class="kpi-row">
-        <div class="kpi-block">
-          <div class="kpi-value">${escapeHtml(String(checkpoint_count))}</div>
-          <div class="kpi-label">runs</div>
-        </div>
-        <div class="kpi-block">
-          <div class="kpi-value">${escapeHtml(String(ships_since_checkpoint))}</div>
-          <div class="kpi-label">ships since</div>
-        </div>
-      </div>
-      <div class="kpi-meta">last: ${escapeHtml(last_check || '—')}</div>
-    </div>`;
-}
-
-function renderTriggers(triggers: string[]): string {
-  const hasAlert = triggers.length > 0;
-  const body = hasAlert
-    ? `<ul class="triggers-list">${triggers.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`
-    : `<div class="triggers-empty">none fired</div>`;
-  return `
-    <div class="card ${hasAlert ? 'card-alert' : ''}">
-      <div class="card-heading">TRIGGERS</div>
-      ${body}
-    </div>`;
-}
-
-function renderActiveFile(info: ActiveFileInfo): string {
-  if (!info.relativePath) {
-    return `
-      <div class="card">
-        <div class="card-heading">ACTIVE FILE</div>
-        <div class="active-file-empty">no editor focused</div>
-      </div>`;
-  }
-
-  const lang = info.language ? `<span class="active-file-lang">${escapeHtml(info.language)}</span>` : '';
-  return `
-    <div class="card">
-      <div class="card-heading">ACTIVE FILE</div>
-      <div class="active-file-row">
-        <div class="active-file-path">${escapeHtml(info.relativePath)}</div>
-        ${lang}
-      </div>
-    </div>`;
-}
-
 function renderRecentChanges(changes: RecentChange[]): string {
   // 임시 파일 + 무의미한 변경 필터
   const filtered = changes.filter(c => !isIgnoredPath(c.relativePath));
@@ -373,13 +320,6 @@ function formatRelativeTime(date: Date): string {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}시간 전`;
   return `${Math.floor(hours / 24)}일 전`;
-}
-
-function shortPath(relPath: string): string {
-  // 전체 경로 보여주되, 마지막 파일명을 강조 (그냥 표시는 그대로)
-  // 너무 길면 끝부분만
-  if (relPath.length <= 40) return relPath;
-  return '...' + relPath.slice(-37);
 }
 
 function escapeHtml(s: string): string {
