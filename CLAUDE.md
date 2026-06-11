@@ -54,13 +54,15 @@ state.md가 50줄 넘으면 Decisions log를 docs/adr/로 잘라낸다.
 
 요청이 다음에 해당하면 직접 답변 대신 해당 스킬 호출:
 - 새 기능 기획, 아이디어 검증 → `/office-hours`
+- 모호한 요구를 정밀 실행가능 스펙으로 (정해진 의도의 명세화, 5단계) → `/spec`
 - 디자인 시스템 만들기 → `/design-consultation`
 - 비주얼 변형 탐색 → `/design-shotgun`
 - 아키텍처/플랜 리뷰 → `/plan-eng-review` 또는 `/autoplan`
 - 스코프 재검토 → `/plan-ceo-review`
 - 버그/에러 디버깅 → `/investigate`
 - 외부 시선 → `/codex review` 또는 `/codex challenge`
-- 코드 품질 점검 → `/code-review`
+- 코드 품질 점검 (diff 단위) → `/code-review`
+- 코드베이스 건강도 대시보드 (전체 품질 지표) → `/health`
 - QA / 사이트 테스트 → `/qa`
 - 출시 → `/ship` → `/land-and-deploy`
 - 출시 후 문서 동기화 → `/document-release`
@@ -68,11 +70,13 @@ state.md가 50줄 넘으면 Decisions log를 docs/adr/로 잘라낸다.
 
 ## Build/test/run commands
 
-(프로젝트 셋업 후 채운다)
-- 빌드:
-- 테스트:
-- 개발 서버:
-- 린트/포맷:
+- 빌드: `npm run build` (esbuild → `out/extension.js`)
+- 테스트: `npm run qa` (자동 하네스, 143 단언 · exit 0/1) + `npx tsc --noEmit` (타입체크)
+- 개발 실행: F5 (Extension Development Host 디버그 세션) — webview 5탭 dogfooding
+- 패키지: `npx vsce package` → `blueprint-dashboard-<ver>.vsix`
+- 설치: `code --install-extension blueprint-dashboard-<ver>.vsix`
+- 린트/포맷: 별도 린터 없음 — `tsc` strict가 게이트
+- 전체 재현/타 머신 설치: `SETUP.md` 참고
 
 ## Session continuity — HISTORY.md / DIGEST.md
 

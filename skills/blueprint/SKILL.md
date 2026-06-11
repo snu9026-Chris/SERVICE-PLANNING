@@ -123,8 +123,9 @@ TodoWrite 안 보일 수 있으니 state.md 프리뷰 핀 안내 반드시 같�
 다음 단계:
 1. Antigravity에서 `.blueprint/state.md` 열고 Ctrl+Shift+V → 탭 고정 (필수)
 2. /office-hours 호출해 docs/PRODUCT.md 채우기
-3. 끝나면 /blueprint 다시 호출 → Phase 0.5 FEASIBILITY (실현가능성·의존성 검증)
-4. 그 다음 Phase 1 DESIGN으로 진행
+3. 이어서 TARGET 서브-인터뷰 (무엇을·어떻게 실행/배포 → `## Build target`)
+4. 끝나면 /blueprint 다시 호출 → Phase 0.5 FEASIBILITY (실현가능성·의존성 검증)
+5. 그 다음 Phase 1 DESIGN으로 진행
 ```
 
 ---
@@ -219,7 +220,7 @@ state.md 직접 편집:
 
 | Phase | Sub-skill | Output | Hard gate |
 |---|---|---|---|
-| 0 | `/office-hours` | `docs/PRODUCT.md` | — |
+| 0 | `/office-hours` + **TARGET 서브-인터뷰** | `docs/PRODUCT.md` (+ `## Build target`) | — |
 | 0.5 | (직접 — 아래 FEASIBILITY 절차) | `docs/FEASIBILITY.md` | PRODUCT.md non-empty |
 | 1 | `/design-consultation` + **UI Composition 인터뷰** | `docs/DESIGN.md` (UI Composition Decisions 섹션 채워짐) | PRODUCT.md non-empty, **FEASIBILITY.md soft-gate (비어있으면 경고만)** |
 | 2 | `/autoplan` (CEO+Design+Eng 묶음) | `docs/ARCHITECTURE.md` + `plans/*.md` | PRODUCT.md non-empty, **DESIGN.md UI Composition 비어있지 않음** |
@@ -228,6 +229,40 @@ state.md 직접 편집:
 | 4.5 | (직접 — 아래 UX-REVIEW 절차) + `/design-review` 위임 | `docs/UX-QUALITY.md` | IMPLEMENT 완료 |
 | 5 | `/qa` → `/review` → `/ship` | merged PR | tests pass, **UX-QUALITY.md soft-gate (비어있으면 경고만)** |
 | 6 | `/land-and-deploy` → `/document-release` → `/retro` | deployed app | shipped |
+
+### TARGET 서브-인터뷰 — Phase 0 끝 (PRODUCT 직후, 0.5 전, ADR-016)
+
+목적: "무엇을 만드나"에 더해 **산출물 형태(artifact)와 실행·배포 방식(runtime/dist)**을 코딩 전에
+못박아 FEASIBILITY/ARCHITECTURE가 그 제약 위에서 돌게 한다. **2축** = (A) artifact type, (B) runtime/distribution.
+일회성 결정이라 독립 phase 아님 — PRODUCT의 짧은 마무리 인터뷰.
+
+핵심 규칙:
+- **자명하면 짧게.** auto-detect로 충분한 명백 케이스는 한 번 확인만(예: 이미 package.json+engines.vscode면 "vscode-extension 맞죠?" 1문).
+- **어휘 고정** — blueprint-dashboard `src/parser/build-target.ts` 레지스트리와 동일 키:
+  website / vscode-extension / tauri / electron / cli / library / mobile. 인터뷰 답 == 감지 키(어긋남 방지).
+
+질문 (AskUserQuestion, 한 번에 하나, 4~6개·분기):
+1. **[artifact]** "무엇을 만드나?" → website / vscode-extension(Antigravity) / tauri / electron / cli / library / mobile / 잘 모르겠음
+   - "잘 모르겠음" → 디스앰비규에이션 **2문 상한**: "브라우저에서 열리나? 에디터 안에서? 터미널에서?" → 타입 추론. 그래도 모호하면 `confidence: tentative`로 두고 넘어감.
+2. **[runtime/dist] (1번에 따라 분기)** "어떻게 실행·배포?"
+   - vscode-extension → F5 dev-run(개인) / 로컬 .vsix / Marketplace publish
+   - website → 정적 호스팅(Vercel·Netlify·GH Pages) / 서버 렌더(Node host) / 로컬 dev만
+   - tauri·electron → 설치파일 / 스토어 / self-update
+   - cli·library → npm·pip·cargo / GitHub Releases 바이너리 / 내부 전용
+3. **[stack] (선택)** "정해둔 스택/프레임워크?" 자유입력 또는 skip.
+4. **[confidence]** "확정인가, 탐색 중인가?" → tentative면 FEASIBILITY가 재검토 표시.
+
+출력 — `docs/PRODUCT.md`(사람용)와 `.blueprint/state.md`(기계용·대시보드 read) 양쪽에 동일 섹션:
+```markdown
+## Build target
+- type: vscode-extension
+- run: F5 dev
+- dist: local .vsix
+- stack: TypeScript + esbuild
+- confidence: locked
+```
+- FEASIBILITY(0.5)는 이 값으로 의존성 질문을 스코프한다 (vsix+marketplace → publisher 계정·manifest·CI 확인).
+- 대시보드 BUILD TARGET 배지(ADR-016)가 이 explicit 값을 detected보다 우선 표시. run/dist는 배지 tooltip.
 
 ### FEASIBILITY 절차 — Phase 0.5 (의존성·실현가능성 검증, ADR-011)
 

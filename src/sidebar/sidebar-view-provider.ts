@@ -19,7 +19,9 @@ import {
   SidebarPayload,
   Phase,
   RecentChange,
+  BuildTarget,
   getProgress,
+  computeTriggerBadge,
 } from '../types';
 
 export const SIDEBAR_VIEW_ID = 'blueprintState';
@@ -73,6 +75,19 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
   private refresh(): void {
     if (!this.view) return;
     this.view.webview.html = this.buildHtml();
+    this.updateBadge();
+  }
+
+  /**
+   * JTBD3 — 활동바 아이콘 빨간 배지.
+   * checkpoint 트리거 발동 시 활동바 Blueprint 아이콘에 숫자 배지를 띄운다.
+   * 사이드바를 열지 않아도 알림이 보이는 게 본질 (사이드바 텍스트 섹션과 별개).
+   * quiet 모드(quiet_until 미래)면 배지 억제. 트리거 0건이면 해제.
+   */
+  private updateBadge(): void {
+    if (!this.view) return;
+    // 순수 결정은 types.computeTriggerBadge에 위임 (하네스로 검증 가능).
+    this.view.badge = computeTriggerBadge(this.payload?.state ?? null);
   }
 
   private buildHtml(): string {
@@ -121,11 +136,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
   }
 
   private renderBody(payload: SidebarPayload): string {
-    const { state, recentChanges, activeFile, workspaceFolderName, workspaceFolderPath } = payload;
+    const { state, recentChanges, workspaceFolderName, workspaceFolderPath, buildTarget } = payload;
     if (!state) return this.renderEmpty();
 
     return [
-      renderHero(state, workspaceFolderName, workspaceFolderPath),
+      renderHero(state, workspaceFolderName, workspaceFolderPath, buildTarget),
       renderPhases(state.phases),
       renderCurrentFocus(state.nextAction, state.phases),
       renderRecentChanges(recentChanges),
@@ -141,6 +156,7 @@ function renderHero(
   state: NonNullable<SidebarPayload['state']>,
   folderName: string,
   folderPath: string,
+  buildTarget: BuildTarget | null,
 ): string {
   const { done, total } = getProgress(state);
   const percent = total === 0 ? 0 : Math.round((done / total) * 100);
@@ -155,6 +171,7 @@ function renderHero(
         <span class="hero-folder-icon">📁</span>
         <span class="hero-folder-path">${escapeHtml(folderPath)}</span>
       </div>
+      ${renderBuildTarget(buildTarget)}
       <div class="hero-divider"></div>
       <div class="hero-phase-id">PHASE ${escapeHtml(active.key)}</div>
       <h1 class="hero-title">${escapeHtml(active.name)}</h1>
@@ -165,6 +182,31 @@ function renderHero(
         <span>${done} / ${total}</span>
         <span>${percent}%</span>
       </div>
+    </div>`;
+}
+
+/**
+ * BUILD TARGET 배지 (ADR-016) — Hero에서 phase 위에 상시 표시.
+ * 산출물 타입이 없으면(감지·명시 둘 다 실패) 빈 문자열.
+ */
+function renderBuildTarget(bt: BuildTarget | null): string {
+  if (!bt) return '';
+  // tooltip: 라벨 + run/dist(2축) + 스택 + 소스, 줄바꿈으로.
+  const sourceTip = bt.source === 'explicit' ? 'state.md 명시' : '자동 감지';
+  const tipParts = [bt.label];
+  if (bt.run) tipParts.push(`실행: ${bt.run}`);
+  if (bt.dist) tipParts.push(`배포: ${bt.dist}`);
+  if (bt.stack) tipParts.push(`스택: ${bt.stack}`);
+  if (bt.confidence === 'tentative') tipParts.push('탐색 중 (FEASIBILITY에서 재검토)');
+  tipParts.push(`(${sourceTip})`);
+  const tip = tipParts.join('\n');
+
+  const tentative = bt.confidence === 'tentative';
+  return `
+    <div class="hero-buildtarget${tentative ? ' tentative' : ''}" title="${escapeHtml(tip)}">
+      <span class="bt-icon">${escapeHtml(bt.icon)}</span>
+      <span class="bt-label">${escapeHtml(bt.label)}${tentative ? '<span class="bt-tentative" aria-label="탐색 중">?</span>' : ''}</span>
+      ${bt.stack ? `<span class="bt-stack">${escapeHtml(bt.stack)}</span>` : ''}
     </div>`;
 }
 

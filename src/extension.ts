@@ -17,6 +17,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { FileWatcher } from './file-watcher/watcher';
 import { parseState } from './parser/state';
+import { detectBuildTarget } from './parser/build-target';
 import { SidebarViewProvider, SIDEBAR_VIEW_ID } from './sidebar/sidebar-view-provider';
 import { BlueprintWebviewPanel, TabId } from './webview/panel';
 import { ERROR_HISTORY_TEMPLATE } from './webview/pages/errors';
@@ -25,6 +26,8 @@ import {
   BlueprintState,
   SidebarPayload,
   ActiveFileInfo,
+  BuildTarget,
+  PackageJsonShape,
 } from './types';
 
 let watcher: FileWatcher | undefined;
@@ -32,6 +35,8 @@ let sidebarProvider: SidebarViewProvider | undefined;
 let webviewPanel: BlueprintWebviewPanel | undefined;
 let currentState: BlueprintState | null = null;
 let currentFolder: vscode.WorkspaceFolder | undefined;
+/** 자동감지된 산출물 타입 (state.md 명시 필드 없을 때 fallback, ADR-016) */
+let detectedBuildTarget: BuildTarget | null = null;
 
 const RELATIVE_PATHS = {
   state: '.blueprint/state.md',
@@ -41,6 +46,7 @@ const RELATIVE_PATHS = {
   design: 'docs/DESIGN.md',
   architecture: 'docs/ARCHITECTURE.md',
   uxQuality: 'docs/UX-QUALITY.md',
+  qaReport: 'docs/qa.report.md',
   errorHistory: 'docs/error.history.md',
 };
 
@@ -151,6 +157,9 @@ async function handleFileChange(event: FileChangeEvent): Promise<void> {
     case RELATIVE_PATHS.uxQuality:
       await reloadArtifact('uxQuality');
       break;
+    case RELATIVE_PATHS.qaReport:
+      await reloadQaReport();
+      break;
     case RELATIVE_PATHS.errorHistory:
       await reloadErrorHistory();
       break;
@@ -183,11 +192,42 @@ async function loadAll(): Promise<void> {
     reloadArtifact('design'),
     reloadArtifact('architecture'),
     reloadArtifact('uxQuality'),
+    reloadQaReport(),
     reloadErrorHistory(),
     reloadDesignFiles(),
     reloadSpecExtras(),
+    reloadBuildTarget(),
   ]);
   refreshSidebar();
+}
+
+/**
+ * 산출물 타입 자동 감지 (ADR-016) — package.json/tauri.conf.json/index.html 등 시그널 수집 후
+ * 순수 detectBuildTarget에 위임. state.md 명시 필드가 있으면 그게 우선이라 이건 fallback.
+ */
+async function reloadBuildTarget(): Promise<void> {
+  if (!currentFolder) { detectedBuildTarget = null; return; }
+  const root = currentFolder.uri.fsPath;
+
+  const pkgRaw = await readFileSafe(currentFolder, 'package.json');
+  let packageJson: PackageJsonShape | null = null;
+  if (pkgRaw) {
+    try { packageJson = JSON.parse(pkgRaw) as PackageJsonShape; } catch { packageJson = null; }
+  }
+
+  const [hasTauriConf, hasIndexHtml, hasCargoToml] = await Promise.all([
+    fileExists(path.join(root, 'src-tauri', 'tauri.conf.json')).then(v => v || fileExists(path.join(root, 'tauri.conf.json'))),
+    fileExists(path.join(root, 'index.html'))
+      .then(v => v || fileExists(path.join(root, 'public', 'index.html')))
+      .then(v => v || fileExists(path.join(root, 'src', 'index.html'))),
+    fileExists(path.join(root, 'Cargo.toml')),
+  ]);
+
+  detectedBuildTarget = detectBuildTarget({ packageJson, hasTauriConf, hasIndexHtml, hasCargoToml });
+}
+
+async function fileExists(fullPath: string): Promise<boolean> {
+  try { await fs.promises.access(fullPath); return true; } catch { return false; }
 }
 
 async function reloadSpecExtras(): Promise<void> {
@@ -287,6 +327,12 @@ async function reloadArtifact(kind: 'product' | 'feasibility' | 'design' | 'arch
   webviewPanel?.setSpecArtifacts({ [kind]: md });
 }
 
+async function reloadQaReport(): Promise<void> {
+  if (!currentFolder) return;
+  const md = await readFileSafe(currentFolder, RELATIVE_PATHS.qaReport);
+  webviewPanel?.setQaReport(md);
+}
+
 async function reloadErrorHistory(): Promise<void> {
   if (!currentFolder) return;
   const md = await readFileSafe(currentFolder, RELATIVE_PATHS.errorHistory);
@@ -354,6 +400,8 @@ function buildSidebarPayload(folder: vscode.WorkspaceFolder): SidebarPayload {
     activeFile: getActiveFile(folder),
     workspaceFolderName: path.basename(folder.uri.fsPath),
     workspaceFolderPath: folder.uri.fsPath,
+    // 명시(state.md) 우선, 없으면 자동감지 (ADR-016)
+    buildTarget: currentState?.buildTarget ?? detectedBuildTarget,
   };
 }
 

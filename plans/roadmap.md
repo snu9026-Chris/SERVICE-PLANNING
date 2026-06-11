@@ -55,6 +55,16 @@
 - [x] checkpoint-2026-05-24.md 작성
 - [x] ARCHITECTURE.md ADR log 갱신
 
+## Phase 4.7 — QA (2026-06-09)
+- [x] 빌드/컴파일 — tsc --noEmit 에러 0, esbuild 번들 OK
+- [x] 파서 전수 — state.md → BlueprintState, 9 phase·status·counters·빈입력 회복성
+- [x] Webview 5탭 렌더러 — Plan/Spec/Preview/QA/Errors 무결 (렌더 누출 0건)
+- [x] QA 탭 자체 — PASS/WARN/FAIL 집계·verdict·노션식 접이식 토글
+- [x] 패키징 — vsce package 성공, .qa-tmp 누출 발견·수정(.vscodeignore)
+- [x] 재실행 하네스 — `npm run qa` (93/93 PASS, exit 0)
+- [x] docs/qa.report.md 기록 → QA 탭 단방향 렌더
+- [ ] (선택) Extension Host F5 dogfooding — webview 5탭 실측
+
 ## Phase 5 — SHIP (2026-05-24)
 - [x] CHANGELOG.md 작성
 - [x] package.json v0.0.1 → v0.1.0

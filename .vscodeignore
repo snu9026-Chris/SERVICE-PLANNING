@@ -5,7 +5,12 @@ docs/**
 plans/**
 .blueprint/**
 skills/**
+test/**
+.qa-tmp/**
 SETUP.md
+DIGEST.md
+CLAUDE.md
+HISTORY.md
 src/**
 tsconfig.json
 esbuild.config.js

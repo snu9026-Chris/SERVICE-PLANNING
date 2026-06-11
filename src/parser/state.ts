@@ -15,7 +15,9 @@ import {
   Counters,
   Settings,
   DecisionEntry,
+  BuildTarget,
 } from '../types';
+import { explicitBuildTarget } from './build-target';
 
 /**
  * 섹션을 ## 헤딩 단위로 분할.
@@ -218,6 +220,25 @@ function parseNextAction(text: string): string {
 }
 
 /**
+ * Build target 섹션 → BuildTarget | null (ADR-016, 명시 필드).
+ * 형식:
+ *   ## Build target
+ *   - type: website
+ *   - stack: Astro + Tailwind   (선택)
+ * 없거나 type 미지정이면 null → extension이 자동감지로 fallback.
+ */
+function parseBuildTarget(text: string): BuildTarget | null {
+  if (!text) return null;
+  const map = parseKeyValueList(text);
+  return explicitBuildTarget(map.get('type'), {
+    stack: map.get('stack'),
+    run: map.get('run'),
+    dist: map.get('dist'),
+    confidence: map.get('confidence'),
+  });
+}
+
+/**
  * 메인 진입점.
  */
 export function parseState(md: string): BlueprintState {
@@ -232,5 +253,6 @@ export function parseState(md: string): BlueprintState {
     triggers: parseTriggers(sections.get('triggers fired') ?? ''),
     settings: parseSettings(sections.get('settings') ?? ''),
     decisions: parseDecisions(sections.get('decisions log') ?? ''),
+    buildTarget: parseBuildTarget(sections.get('build target') ?? ''),
   };
 }

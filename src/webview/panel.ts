@@ -5,7 +5,8 @@
  *  1. Plan    — plans/roadmap.md (state.md 현재 위치 강조)
  *  2. Spec    — PRODUCT/DESIGN/ARCHITECTURE.md 풀-너비
  *  3. Preview — Claude push한 HTML 1개
- *  4. Errors  — docs/error.history.md (없으면 생성 버튼)
+ *  4. QA      — docs/qa.report.md (전수 점검 체크리스트, 없으면 안내)
+ *  5. Errors  — docs/error.history.md (없으면 생성 버튼)
  *
  * 데이터 흐름:
  *  extension.ts → setBlueprintState / setSpecArtifacts / setPreviewContent / setErrorHistory → refresh
@@ -22,22 +23,24 @@ import { BlueprintState } from '../types';
 import { renderPlanPage } from './pages/plan';
 import { renderSpecPage, SpecArtifacts, SpecActiveSelection, SpecFolderKey } from './pages/spec';
 import { renderPreviewPage, PreviewContent, PreviewDesignFile } from './pages/preview';
+import { renderQaPage } from './pages/qa';
 import { renderErrorsPage } from './pages/errors';
 import { makeNonce, escapeHtml } from './shared';
 
 const VIEW_TYPE = 'blueprintDashboard';
 const PANEL_TITLE = 'Blueprint Dashboard';
 
-export type TabId = 'plan' | 'spec' | 'preview' | 'errors';
+export type TabId = 'plan' | 'spec' | 'preview' | 'qa' | 'errors';
 
 const TAB_LABELS: Record<TabId, string> = {
   plan: 'Plan',
   spec: 'Spec',
   preview: 'Preview',
+  qa: 'QA',
   errors: 'Errors',
 };
 
-const TAB_ORDER: TabId[] = ['plan', 'spec', 'preview', 'errors'];
+const TAB_ORDER: TabId[] = ['plan', 'spec', 'preview', 'qa', 'errors'];
 
 export interface BlueprintWebviewPanelCallbacks {
   /** Errors 페이지에서 "에러 히스토리 시작" 버튼 클릭 시 호출 */
@@ -58,6 +61,7 @@ export class BlueprintWebviewPanel {
   private specActive?: SpecActiveSelection;
   private preview: PreviewContent = { html: null, sourcePath: null, pushedAt: null };
   private designFiles: PreviewDesignFile[] = [];
+  private qaReportMd: string | null = null;
   private errorHistoryMd: string | null = null;
 
   private disposables: vscode.Disposable[] = [];
@@ -134,14 +138,33 @@ export class BlueprintWebviewPanel {
     if (this.panel && this.activeTab === 'preview') this.refresh();
   }
 
+  setQaReport(md: string | null): void {
+    this.qaReportMd = md;
+    if (this.panel && this.activeTab === 'qa') this.refresh();
+  }
+
   setErrorHistory(md: string | null): void {
     this.errorHistoryMd = md;
     if (this.panel && this.activeTab === 'errors') this.refresh();
   }
 
-  /** Phase 클릭 시 — Spec 탭으로 이동 + 해당 폴더 자동 펼침 */
+  /** Phase 클릭 시 — 해당 phase의 콘텐츠 탭으로 이동 */
   async showArtifact(phaseKey: string): Promise<void> {
     const phase = this.currentState?.phases.find(p => p.key === phaseKey);
+
+    // QA phase는 Spec이 아니라 독립 QA 탭으로 (ADR-015: Spec 종속 제거)
+    if (phase?.name === 'QA') {
+      this.activeTab = 'qa';
+      this.show();
+      return;
+    }
+    // ERRORS phase가 있으면 Errors 탭으로
+    if (phase?.name === 'ERRORS') {
+      this.activeTab = 'errors';
+      this.show();
+      return;
+    }
+
     const section = artifactFolderForPhaseName(phase?.name);
     this.specFocus = section;
     this.specActive = undefined; // 폴더의 첫 섹션으로 리셋
@@ -266,6 +289,27 @@ export class BlueprintWebviewPanel {
       });
     });
 
+    // QA 섹션 — 노션식 접이식 토글 (클라이언트 측 DOM 토글)
+    document.querySelectorAll('[data-qa-toggle]').forEach(el => {
+      el.addEventListener('click', () => {
+        const sec = el.closest('.qa-section');
+        if (!sec) return;
+        sec.classList.toggle('open');
+        el.setAttribute('aria-expanded', sec.classList.contains('open') ? 'true' : 'false');
+      });
+    });
+    const setAllQa = (open) => {
+      document.querySelectorAll('.qa-section').forEach(sec => {
+        sec.classList.toggle('open', open);
+        const head = sec.querySelector('[data-qa-toggle]');
+        if (head) head.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    };
+    document.querySelectorAll('[data-qa-expand-all]').forEach(el =>
+      el.addEventListener('click', () => setAllQa(true)));
+    document.querySelectorAll('[data-qa-collapse-all]').forEach(el =>
+      el.addEventListener('click', () => setAllQa(false)));
+
     // Design gallery — img 깨지면 placeholder만 보이게 (img 자체 hide)
     document.querySelectorAll('.gallery-image[data-fallback="show"]').forEach(img => {
       img.addEventListener('error', () => img.classList.add('hidden'));
@@ -311,6 +355,14 @@ export class BlueprintWebviewPanel {
 
   private tabBadge(tab: TabId): string {
     if (tab === 'preview' && this.preview.html) return `<span class="tab-dot tab-dot-blue"></span>`;
+    if (tab === 'qa' && this.qaReportMd) {
+      // FAIL이 있으면 빨강 count, 없고 WARN이 있으면 주황 count, 둘 다 없으면 초록 점
+      const fails = (this.qaReportMd.match(/^[-*]\s+❌/gm) ?? []).length;
+      const warns = (this.qaReportMd.match(/^[-*]\s+⚠/gm) ?? []).length;
+      if (fails > 0) return `<span class="tab-count tab-count-fail">${fails}</span>`;
+      if (warns > 0) return `<span class="tab-count tab-count-warn">${warns}</span>`;
+      return `<span class="tab-dot tab-dot-green"></span>`;
+    }
     if (tab === 'errors' && this.errorHistoryMd) {
       const count = (this.errorHistoryMd.match(/^## \d{4}-\d{2}-\d{2}/gm) ?? []).length;
       if (count > 0) return `<span class="tab-count">${count}</span>`;
@@ -325,7 +377,9 @@ export class BlueprintWebviewPanel {
       case 'spec':
         return renderSpecPage(this.specArtifacts, this.specActive, this.specFocus);
       case 'preview':
-        return renderPreviewPage(this.preview, this.designFiles);
+        return renderPreviewPage(this.preview, this.designFiles, this.specArtifacts.design);
+      case 'qa':
+        return renderQaPage(this.qaReportMd);
       case 'errors':
         return renderErrorsPage(this.errorHistoryMd);
     }

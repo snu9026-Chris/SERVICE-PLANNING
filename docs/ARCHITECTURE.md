@@ -20,8 +20,8 @@
 DDD 정신 그대로. 작은 extension이라 도메인 5개로 충분.
 
 ### 1. parser
-- **Owns**: `.md` 파싱, 데이터 객체화. state.md 스키마, PRODUCT/DESIGN/ARCHITECTURE.md 섹션 추출.
-- **NOT owns**: 파일 watch, 렌더링, UI 상태
+- **Owns**: `.md` 파싱, 데이터 객체화. state.md 스키마, PRODUCT/DESIGN/ARCHITECTURE.md 섹션 추출. 산출물 타입(BUILD TARGET) 명시 파싱 + 자동감지 순수 로직(`build-target.ts`, ADR-016).
+- **NOT owns**: 파일 watch, 렌더링, UI 상태, fs IO(시그널 수집은 extension이 모아서 넘김)
 - **Emits**: `state-updated`, `artifact-updated`
 - **Subscribes**: `file-changed`
 
@@ -93,6 +93,7 @@ DDD 정신 그대로. 작은 extension이라 도메인 5개로 충분.
 | `Trigger` | parser | `{ condition: string, fired_at: Date }` |
 | `Artifact` | parser | `{ path, title, sections: Section[], html: string }` |
 | `DesignToken` | parser | `{ kind: 'color' \| 'font' \| 'spacing', value, description }` |
+| `BuildTarget` | parser | `{ type, label, icon, stack?, source: 'explicit' \| 'detected' }` (ADR-016) |
 
 모든 entity는 *immutable*. parser가 새 버전을 emit하면 sidebar/webview가 통째로 교체.
 
@@ -177,11 +178,13 @@ V0~V3은 `resume` 모드만 실제 동작. 나머지 두 모드는 안내 메시
 | 003 | 2026-05-22 | 단방향 데이터 (.md → UI). UI에서 .md 수정 안 함 |
 | 004 | 2026-05-22 | 이벤트 버스 기반 도메인 간 통신, 직접 import 금지 |
 | 005 | 2026-05-22 | Generic mode 분리 = V4 이후 별도 결정. V0~V3은 blueprint 전용 |
-| 006 | 2026-05-22 | 가운데 webview 4페이지 멀티탭 (Plan/Spec/Preview/Errors) |
+| 006 | 2026-05-22 | 가운데 webview 4페이지 멀티탭 (Plan/Spec/Preview/Errors) → ADR-014에서 5페이지로 확장 |
 | 007 | 2026-05-22 | 사이드바 TreeView → WebviewViewProvider 전환 (디자인 자유) |
 | 008 | 2026-05-24 | 마크다운 자동 가공 파이프라인 (swatch/NON-GOALS/디자인 시안/카드) |
 | 009 | 2026-05-24 | CHECKPOINT를 phase 리스트에서 제외 → 사이드바 KPI 카드. Phase 6개. |
 | 010 | 2026-05-30 | REVIEW를 phase로 박음 — IMPLEMENT와 SHIP 사이. Phase 7개. SHIP 전 hard gate. |
+| 014 | 2026-06-09 | 가운데 webview에 QA 탭 추가 (Preview↔Errors). qa.report.md 단방향 렌더 + `npm run qa` 하네스. 5페이지. |
+| 015 | 2026-06-09 | QA를 파이프라인 phase로 추가 (4.7, UX-REVIEW↔SHIP). SHIP 직전 최종 검증 게이트. ADR-012 동적 리스트라 state.md 한 줄로 반영. |
 
 세부는 `docs/adr/ADR-{NNN}.md` 풀 파일 (006~008은 별도 파일 작성됨)
 

@@ -4,6 +4,51 @@
 
 형식: [Keep a Changelog](https://keepachangelog.com/) + [Semantic Versioning](https://semver.org/).
 
+## [0.11.0] — 2026-06-11
+
+### Added (BUILD TARGET 2축 — runtime/dist + Phase 0 인터뷰)
+- **BUILD TARGET 2축 확장** — type(무엇을)에 더해 `run`(실행: F5 dev/npm/정적 호스팅 …)·`dist`(배포: Marketplace/GitHub Releases …)·`confidence`(locked/tentative) 명시 필드 지원. 배지 pill은 type, 상세는 tooltip. `tentative`면 점선 테두리 + `?` 마커(FEASIBILITY 재검토 신호).
+- **`/blueprint` Phase 0 TARGET 서브-인터뷰 신설** (ADR-016, blueprint 메타스킬) — PRODUCT 직후 "무엇을 만드나(artifact) + 어떻게 실행·배포(runtime/dist)"를 4~6문 분기로 캐물어 `## Build target` 슬롯을 채움. 대시보드 어휘(`build-target.ts` 레지스트리)와 동일 키 사용 → 인터뷰 답 == 자동감지 키. state.md/PRODUCT 템플릿에 슬롯 추가.
+- 하네스 +5단언(run/dist/confidence 파싱·보존, 빈 슬롯 fallback) → 137→**142개 단언, 142/142 PASS**.
+- 이 repo state.md에 `## Build target` 명시(dogfood) → 배지가 explicit 소스로 표시.
+
+## [0.10.0] — 2026-06-10
+
+### Added (BUILD TARGET 상시 표시 — ADR-016)
+- **사이드바 Hero에 BUILD TARGET 배지** — 폴더 경로 아래·phase 위에 "이 프로젝트가 무슨 형태를 만드는지"를 클릭 0으로 상시 표시. 아이콘+라벨: 🌐 Website · 📦 VS Code Extension · 🖥️ Tauri · ⚛️ Electron · 📱 Mobile · 🔧 CLI · 📚 Library.
+- **하이브리드 데이터 소스** — ① `.blueprint/state.md`에 `## Build target`(`- type:`, `- stack:`) 명시하면 우선, ② 없으면 `package.json`(engines.vscode/contributes/deps)·`tauri.conf.json`·`index.html` 등으로 **자동 감지**(설정 0), ③ 둘 다 없으면 미표시. 명시 type은 별칭 정규화(`vsix`→VS Code Extension, `homepage`→Website, `native`→Tauri 등).
+- **`detectBuildTarget()` / `explicitBuildTarget()`** — vscode/fs 비의존 순수 함수(`src/parser/build-target.ts`), 시그널 수집만 extension이 담당. 하네스 20단언. 117→**137개 단언, 137/137 PASS**.
+
+## [0.9.9] — 2026-06-10
+
+### Added (JTBD5 — DESIGN TOKENS 패널)
+- **Preview 탭 상단에 DESIGN TOKENS 패널** — DESIGN.md의 hex/rgba 색상과 폰트 family를 자동 추출해 색 스와치(용도 라벨 포함) + 폰트 샘플로 렌더. DESIGN.md §자동시각화가 명세했던 "색 swatch 자동 삽입 + 폰트 family 자동 샘플"의 구현. 실제 DESIGN.md에서 13색·Pretendard 추출.
+  - 반투명/투명 색은 체커 배경 위에 표시(가시성), 표 행의 '용도' 컬럼을 라벨로.
+  - 본문 설명용 `rgba(...)` 텍스트 오탐 방지(괄호 안 숫자 필수).
+- **`extractDesignTokens()`** — vscode 비의존 순수 함수(`src/webview/design-tokens.ts`)로 분리, 하네스 18단언 커버. 100→**117개 단언, 117/117 PASS**.
+
+### Fixed
+- FEASIBILITY 사후검증의 마지막 ⚠️(JTBD5 자동 swatch 미구현) 해소 → **전 JTBD ✅(5/5)**.
+
+## [0.9.8] — 2026-06-10
+
+### Added (Phase 0.5 FEASIBILITY + JTBD3 활동바 배지)
+- **Phase 0.5 FEASIBILITY 사후 검증** — `docs/FEASIBILITY.md` 작성(템플릿→실측). PRODUCT.md의 JTBD 5개를 구현 대조해 ✅/⚠️/❌ 판정. 명세-구현 간극 2건 발견(JTBD3 배지 미배선, JTBD5 자동 swatch 미구현).
+- **JTBD3 활동바 배지 배선** — checkpoint 트리거 발동 시 활동바 Blueprint 아이콘에 숫자 배지. `computeTriggerBadge()`(types.ts, vscode 비의존 순수 함수) → `SidebarViewProvider.updateBadge()`가 `view.badge` 설정. 트리거 ≥1 && quiet 아님 → 배지, 0건/quiet → 해제. 사이드바를 열지 않아도 알림이 보이는 게 본질(명세 충족).
+- **QA 하네스 +7단언** — 활동바 배지 6단언 + FEASIBILITY done 검증. 93→**100개 단언, 100/100 PASS**.
+
+## [0.9.7] — 2026-06-10
+
+### Added (QA 탭 + QA phase)
+- **가운데 webview에 QA 탭 신설** (Preview↔Errors 사이, ADR-014). `docs/qa.report.md`를 단방향 렌더 — 상단 PASS/WARN/FAIL 요약 바 + verdict + 섹션별 체크리스트. extension은 QA를 실행하지 않고 결과만 시각화 (ADR-002 유지).
+- **노션식 접이식 토글** — 각 섹션을 클릭해 펼침/접힘(셰브론 ▸→▾). FAIL/WARN 섹션은 자동 펼침, 전부 PASS면 접힘. 상단 전체 펼치기/접기, 섹션별 `N FAIL`·`M WARN` 칩, `aria-expanded`.
+- **QA를 Phase 4.7로 파이프라인·사이드바 PHASES에 추가** (ADR-015). UX-REVIEW(4.5)↔SHIP(5) 사이 최종 검증 게이트. ADR-012 동적 리스트라 state.md 한 줄로 반영.
+- **재실행 가능 QA 하네스** `test/qa-harness.ts` (`npm run qa`) — 파서 + 5개 페이지 렌더러를 실제 파일로 구동, 93개 단언, exit 0/1로 CI 게이트화.
+
+### Fixed
+- **사이드바 QA phase 클릭 시 Spec이 아니라 QA 탭으로 이동** — phase 클릭이 무조건 Spec으로 가던 라우팅을 name별 분기로 수정 (QA→QA탭).
+- **패키지 위생** — `.qa-tmp/`·`test/`·`DIGEST.md`·`CLAUDE.md`·`HISTORY.md`가 .vsix에 섞이던 누출을 `.vscodeignore`로 차단 (10 files).
+
 ## [0.9.6] — 2026-06-07
 
 ### Added (Phase 4.5 UX-REVIEW — 제품·UX 품질 게이트)

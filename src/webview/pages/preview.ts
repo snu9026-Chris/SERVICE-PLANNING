@@ -7,6 +7,7 @@
  */
 
 import { escapeHtml } from '../shared';
+import { extractDesignTokens, DesignTokens } from '../design-tokens';
 
 export interface PreviewContent {
   html: string | null;
@@ -24,6 +25,7 @@ export interface PreviewDesignFile {
 export function renderPreviewPage(
   preview: PreviewContent,
   designFiles: PreviewDesignFile[] = [],
+  designMarkdown: string | null = null,
 ): string {
   // 1) 활성 콘텐츠 있으면 — 풀-너비 viewer + 상단 그리드로 돌아가기 버튼
   if (preview.html) {
@@ -42,9 +44,12 @@ export function renderPreviewPage(
       </div>`;
   }
 
-  // 2) 그리드
+  // 2) 그리드 — 상단에 DESIGN TOKENS(DESIGN.md 자동 추출) + 아래 시안 갤러리
+  const tokensHtml = renderDesignTokens(extractDesignTokens(designMarkdown));
+
   if (designFiles.length === 0) {
     return `
+      ${tokensHtml}
       <div class="page-hero compact">
         <div class="page-eyebrow">PREVIEW · 디자인 시안</div>
         <h1 class="page-title">시안이 없어요</h1>
@@ -71,6 +76,7 @@ export function renderPreviewPage(
   }).join('');
 
   return `
+    ${tokensHtml}
     <div class="page-hero compact">
       <div class="page-eyebrow">PREVIEW · 디자인 시안</div>
       <h1 class="page-title">${designFiles.length}개 시안</h1>
@@ -80,6 +86,44 @@ export function renderPreviewPage(
     </div>
 
     ${groupsHtml}`;
+}
+
+/**
+ * DESIGN TOKENS 패널 — DESIGN.md에서 자동 추출한 색상 스와치 + 폰트 샘플 (JTBD5).
+ * 토큰이 하나도 없으면 빈 문자열(섹션 자체를 그리지 않음).
+ */
+function renderDesignTokens(tokens: DesignTokens): string {
+  if (tokens.colors.length === 0 && tokens.fonts.length === 0) return '';
+
+  const swatches = tokens.colors.map(c => {
+    const tip = c.label ? `${c.label} · ${c.value}` : c.value;
+    return `
+      <div class="token-swatch" title="${escapeHtml(tip)}">
+        <span class="token-chip"><span class="token-chip-fill" style="background:${escapeHtml(c.value)}"></span></span>
+        <span class="token-meta">
+          <span class="token-value">${escapeHtml(c.value)}</span>
+          ${c.label ? `<span class="token-label">${escapeHtml(c.label)}</span>` : ''}
+        </span>
+      </div>`;
+  }).join('');
+
+  const fonts = tokens.fonts.map(f => `
+    <div class="token-font">
+      <span class="token-font-sample" style="font-family:'${escapeHtml(f)}', 'Pretendard Variable', sans-serif">Aa 가나다 123</span>
+      <span class="token-font-name">${escapeHtml(f)}</span>
+    </div>`).join('');
+
+  return `
+    <section class="preview-tokens">
+      <div class="preview-category-header">
+        <span class="preview-category-icon">🎨</span>
+        <span class="preview-category-name">DESIGN TOKENS</span>
+        <span class="preview-category-count">${tokens.colors.length + tokens.fonts.length}</span>
+      </div>
+      <div class="token-subtitle">DESIGN.md에서 자동 추출 — 색상 ${tokens.colors.length} · 폰트 ${tokens.fonts.length}</div>
+      ${tokens.colors.length ? `<div class="token-swatches">${swatches}</div>` : ''}
+      ${tokens.fonts.length ? `<div class="token-fonts">${fonts}</div>` : ''}
+    </section>`;
 }
 
 function renderTile(f: PreviewDesignFile): string {

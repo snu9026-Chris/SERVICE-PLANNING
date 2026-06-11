@@ -2,7 +2,7 @@
   "name": "blueprint-dashboard",
   "displayName": "Blueprint Dashboard",
   "description": "/blueprint 메타스킬의 진행도·트리거·산출물을 Antigravity 사이드바·webview에 영구 시각화",
-  "version": "0.9.6",
+  "version": "0.11.0",
   "publisher": "snu90",
   "private": true,
   "repository": {
@@ -64,6 +64,7 @@
   "scripts": {
     "build": "node esbuild.config.js",
     "watch": "node esbuild.config.js --watch",
+    "qa": "esbuild test/qa-harness.ts --bundle --platform=node --outfile=.qa-tmp/qa-harness.cjs --external:vscode && node .qa-tmp/qa-harness.cjs",
     "package": "vsce package",
     "vscode:prepublish": "npm run build"
   },

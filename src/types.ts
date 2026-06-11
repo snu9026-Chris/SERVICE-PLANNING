@@ -40,6 +40,52 @@ export interface DecisionEntry {
 }
 
 /**
+ * 산출물 타입(BUILD TARGET) — 이 프로젝트가 최종적으로 뽑는 결과물 형태 (ADR-016).
+ * 사이드바 Hero에 phase 위 배지로 상시 표시.
+ */
+export interface BuildTarget {
+  /** 'website' | 'vscode-extension' | 'tauri' | 'electron' | 'cli' | 'library' | 'mobile' */
+  type: string;
+  /** 표시 라벨. 예: 'VS Code Extension' */
+  label: string;
+  /** 이모지 아이콘 */
+  icon: string;
+  /** 선택: 스택 한 줄(명시 필드에서). 예: 'Astro + Tailwind' */
+  stack?: string;
+  /** 선택: 실행 방식(명시). 예: 'F5 dev', 'npm', '정적 호스팅' (ADR-016 2축 중 runtime) */
+  run?: string;
+  /** 선택: 배포 방식(명시). 예: 'local .vsix', 'Marketplace', 'GitHub Releases' (ADR-016 2축 중 dist) */
+  dist?: string;
+  /** 선택: 'locked' | 'tentative' — tentative면 FEASIBILITY가 재검토 (명시 전용) */
+  confidence?: string;
+  /** 'explicit'(state.md 명시) | 'detected'(자동 감지) */
+  source: 'explicit' | 'detected';
+}
+
+/**
+ * 자동 감지 입력 시그널 — extension이 fs로 모아서 detectBuildTarget에 넘긴다.
+ * (순수 감지 함수가 vscode/fs에 의존하지 않도록 분리)
+ */
+export interface ProjectSignals {
+  /** 파싱된 package.json (없거나 깨졌으면 null) */
+  packageJson: PackageJsonShape | null;
+  hasTauriConf: boolean;
+  hasIndexHtml: boolean;
+  hasCargoToml: boolean;
+}
+
+export interface PackageJsonShape {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  engines?: Record<string, string>;
+  contributes?: unknown;
+  bin?: unknown;
+  main?: unknown;
+  module?: unknown;
+  exports?: unknown;
+}
+
+/**
  * .blueprint/state.md 파싱 결과 — 사이드바·webview 모두 이걸 받는다.
  */
 export interface BlueprintState {
@@ -51,6 +97,8 @@ export interface BlueprintState {
   triggers: string[];
   settings: Settings;
   decisions: DecisionEntry[];
+  /** state.md `## Build target` 명시 필드(있으면). 자동감지는 extension에서 fallback. */
+  buildTarget?: BuildTarget | null;
 }
 
 export interface ArtifactSection {
@@ -111,6 +159,8 @@ export interface SidebarPayload {
   activeFile: ActiveFileInfo;
   workspaceFolderName: string;
   workspaceFolderPath: string;
+  /** 해소된 산출물 타입 — 명시(state.buildTarget) 우선, 없으면 자동감지 (ADR-016). */
+  buildTarget: BuildTarget | null;
 }
 
 /**
@@ -145,4 +195,31 @@ export function isQuiet(state: BlueprintState, now: Date = new Date()): boolean 
   const until = new Date(state.settings.quiet_until);
   if (isNaN(until.getTime())) return false;
   return now < until;
+}
+
+/** 활동바 아이콘 배지 — vscode.ViewBadge 와 구조적으로 호환되는 순수 타입. */
+export interface ViewBadge {
+  value: number;
+  tooltip: string;
+}
+
+/**
+ * JTBD3 — 활동바 Blueprint 아이콘 배지 결정 (순수 함수, vscode 비의존).
+ * checkpoint 트리거가 발동(≥1건)했고 quiet 모드가 아니면 배지를 띄운다.
+ * 사이드바를 열지 않아도 알림이 보이는 게 본질.
+ * - 트리거 0건 → undefined (배지 해제)
+ * - quiet_until 미래 → undefined (조용 모드, 알림 억제)
+ */
+export function computeTriggerBadge(
+  state: BlueprintState | null,
+  now: Date = new Date(),
+): ViewBadge | undefined {
+  if (!state) return undefined;
+  const n = state.triggers.length;
+  if (n === 0) return undefined;
+  if (isQuiet(state, now)) return undefined;
+  return {
+    value: n,
+    tooltip: `체크포인트 트리거 ${n}건 발동 — /blueprint check 권장`,
+  };
 }

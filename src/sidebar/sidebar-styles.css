@@ -113,6 +113,65 @@ html, body {
   word-break: break-all;
 }
 
+/* BUILD TARGET 배지 (ADR-016) — phase 위 상시 표시 */
+.hero-buildtarget {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 5px 10px 5px 8px;
+  background: rgba(0, 122, 255, 0.1);
+  border: 1px solid rgba(0, 122, 255, 0.18);
+  border-radius: 999px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.hero-buildtarget .bt-icon {
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.hero-buildtarget .bt-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0067d6;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.hero-buildtarget .bt-stack {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6e6e73;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 6px;
+  margin-left: 2px;
+  border-left: 1px solid rgba(0, 122, 255, 0.22);
+}
+
+/* confidence: tentative — 점선 테두리 + 라벨에 작은 ? 마커 */
+.hero-buildtarget.tentative {
+  border-style: dashed;
+  background: rgba(142, 142, 147, 0.1);
+  border-color: rgba(142, 142, 147, 0.35);
+}
+
+.hero-buildtarget.tentative .bt-label {
+  color: #6e6e73;
+}
+
+.hero-buildtarget .bt-tentative {
+  font-size: 10px;
+  font-weight: 800;
+  color: #ff9500;
+  margin-left: 3px;
+  vertical-align: super;
+}
+
 .hero-divider {
   height: 1px;
   background: rgba(0, 0, 0, 0.08);
