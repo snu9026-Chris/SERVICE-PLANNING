@@ -56,7 +56,7 @@ export class BlueprintWebviewPanel {
   // 페이지별 데이터 캐시
   private currentState: BlueprintState | null = null;
   private roadmapMd: string | null = null;
-  private specArtifacts: SpecArtifacts = { product: null, feasibility: null, design: null, architecture: null, uxQuality: null };
+  private specArtifacts: SpecArtifacts = { inquiry: null, product: null, feasibility: null, design: null, architecture: null, uxQuality: null };
   private specFocus?: SpecFolderKey;
   private specActive?: SpecActiveSelection;
   private preview: PreviewContent = { html: null, sourcePath: null, pushedAt: null };
@@ -414,6 +414,7 @@ export class BlueprintWebviewPanel {
  */
 function artifactFolderForPhaseName(name: string | undefined): SpecFolderKey | undefined {
   switch (name) {
+    case 'INQUIRY': return 'inquiry';
     case 'PRODUCT': return 'product';
     case 'FEASIBILITY': return 'feasibility';
     case 'DESIGN': return 'design';

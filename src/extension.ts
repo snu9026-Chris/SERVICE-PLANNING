@@ -41,6 +41,7 @@ let detectedBuildTarget: BuildTarget | null = null;
 const RELATIVE_PATHS = {
   state: '.blueprint/state.md',
   roadmap: 'plans/roadmap.md',
+  inquiry: 'docs/INQUIRY.md',
   product: 'docs/PRODUCT.md',
   feasibility: 'docs/FEASIBILITY.md',
   design: 'docs/DESIGN.md',
@@ -142,6 +143,9 @@ async function handleFileChange(event: FileChangeEvent): Promise<void> {
     case RELATIVE_PATHS.roadmap:
       await reloadRoadmap();
       break;
+    case RELATIVE_PATHS.inquiry:
+      await reloadArtifact('inquiry');
+      break;
     case RELATIVE_PATHS.product:
       await reloadArtifact('product');
       break;
@@ -164,9 +168,14 @@ async function handleFileChange(event: FileChangeEvent): Promise<void> {
       await reloadErrorHistory();
       break;
     default:
-      if (rel.startsWith('docs/design/screenshots/') && rel.endsWith('.html')) {
+      if (rel.startsWith('docs/design/') && rel.endsWith('.html')) {
+        // 디자인 시안 HTML — screenshots/ 든 redesign/ 든 어느 하위 폴더든
+        // Preview 갤러리를 즉시 다시 읽는다 (저장하자마자 우측 패널에 뜨도록).
         await reloadDesignFiles();
-        await reloadSpecExtras();
+        // screenshots/ 시안은 Spec 페이지 designHtmlFiles에도 반영
+        if (rel.startsWith('docs/design/screenshots/')) {
+          await reloadSpecExtras();
+        }
       } else if (rel.startsWith('docs/design/')) {
         await reloadArtifact('design');
       } else if (rel.startsWith('docs/adr/') && rel.endsWith('.md')) {
@@ -187,6 +196,7 @@ async function loadAll(): Promise<void> {
   await Promise.all([
     reloadState(),
     reloadRoadmap(),
+    reloadArtifact('inquiry'),
     reloadArtifact('product'),
     reloadArtifact('feasibility'),
     reloadArtifact('design'),
@@ -320,7 +330,7 @@ async function reloadRoadmap(): Promise<void> {
   webviewPanel?.setRoadmap(md);
 }
 
-async function reloadArtifact(kind: 'product' | 'feasibility' | 'design' | 'architecture' | 'uxQuality'): Promise<void> {
+async function reloadArtifact(kind: 'inquiry' | 'product' | 'feasibility' | 'design' | 'architecture' | 'uxQuality'): Promise<void> {
   if (!currentFolder) return;
   const relPath = RELATIVE_PATHS[kind];
   const md = await readFileSafe(currentFolder, relPath);

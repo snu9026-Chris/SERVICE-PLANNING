@@ -25,6 +25,12 @@ ARCHITECTURE.md를 바꿀 결정이 생기면 코드 짜기 전에 `docs/adr/ADR
 ### Phase 3 진입 차단
 PRODUCT.md 또는 ARCHITECTURE.md가 비어있거나 템플릿 그대로면 코드 작업 거부. /blueprint로 먼저 채우게 안내.
 
+### 디자인 시안은 항상 Preview 패널로
+사용자와 상의해서 만드는 디자인 시안(HTML)은 **반드시 `docs/design/screenshots/<이름>.html` 파일로 저장**한다. 그러면 확장의 Preview 탭 갤러리에 자동으로 떠서, 카드를 클릭하면 우측 패널 안 iframe으로 인라인 렌더링된다.
+- 브라우저로 띄우거나(`/design-shotgun` 등) 임시 폴더에 두지 않는다 — 사용자는 Preview 패널에서 보길 원한다.
+- 파일명에 `mockup`이 들어가면 "Mockup · 검증 단계" 카테고리로, `sidebar`/`webview-*` prefix는 해당 카테고리로 자동 분류된다([preview.ts](src/webview/pages/preview.ts)의 `categorizeFile`).
+- `docs/design/` 하위 어느 폴더든 `.html` 저장 시 갤러리가 즉시 갱신된다([extension.ts](src/extension.ts) `handleFileChange`).
+
 ## Blueprint integration
 
 ### Trigger 검사 (매 세션 시작)

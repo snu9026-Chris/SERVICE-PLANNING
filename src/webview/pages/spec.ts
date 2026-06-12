@@ -19,6 +19,7 @@ export interface SpecExtraFile {
 }
 
 export interface SpecArtifacts {
+  inquiry: string | null;
   product: string | null;
   feasibility: string | null;
   design: string | null;
@@ -31,6 +32,7 @@ export interface SpecArtifacts {
 }
 
 const FOLDER_LABELS: Record<string, string> = {
+  inquiry: 'INQUIRY.md',
   product: 'PRODUCT.md',
   feasibility: 'FEASIBILITY.md',
   design: 'DESIGN.md',
@@ -40,7 +42,7 @@ const FOLDER_LABELS: Record<string, string> = {
   'design-gallery': 'design/screenshots/',
 };
 
-export type SpecFolderKey = 'product' | 'feasibility' | 'design' | 'architecture' | 'ux-quality' | 'adr' | 'design-gallery';
+export type SpecFolderKey = 'inquiry' | 'product' | 'feasibility' | 'design' | 'architecture' | 'ux-quality' | 'adr' | 'design-gallery';
 
 /**
  * `${folder}:${sectionId}` 형식. 예: "product:non-goals"
@@ -61,6 +63,7 @@ export function renderSpecPage(
   const galleryFiles = artifacts.designHtmlFiles ?? [];
 
   const folders: Array<[SpecFolderKey, MarkdownSection[]]> = [
+    ['inquiry', artifacts.inquiry ? extractSections(artifacts.inquiry) : []],
     ['product', artifacts.product ? extractSections(artifacts.product) : []],
     ['feasibility', artifacts.feasibility ? extractSections(artifacts.feasibility) : []],
     ['design', artifacts.design ? extractSections(artifacts.design) : []],
