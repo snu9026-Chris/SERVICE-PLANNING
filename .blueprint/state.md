@@ -1,20 +1,21 @@
 # Blueprint State — 대시보드 확장 프로그램
 
 ## Progress
-- [x] Phase 0: PRODUCT (2026-05-22)
-- [x] Phase 0.5: FEASIBILITY (사후 검증, 2026-06-10)
-- [x] Phase 1: DESIGN (2026-05-22)
-- [x] Phase 2: ARCHITECTURE (2026-05-22)
-- [x] Phase 3: IMPLEMENT (2026-05-24)
-- [x] Phase 4: REVIEW (checkpoint 1회 + ad-hoc, 2026-05-24)
-- [x] Phase 4.5: UX-REVIEW (시범 채점 7.4/10, 2026-06-07)
-- [x] Phase 4.7: QA (전수 QA 통과, 2026-06-09)
-- [x] Phase 5: SHIP (v0.1.0, 2026-05-24)
-- [x] Phase 6: POST-SHIP (2026-05-24)
+- [x] Phase 0: INQUIRY (사후 정리, 2026-06-12)
+- [x] Phase 1: PRODUCT (2026-05-22)
+- [x] Phase 1.5: FEASIBILITY (사후 검증, 2026-06-10)
+- [x] Phase 2: DESIGN (2026-05-22)
+- [x] Phase 3: ARCHITECTURE (2026-05-22)
+- [x] Phase 4: IMPLEMENT (2026-05-24)
+- [x] Phase 5: REVIEW (checkpoint 1회 + ad-hoc, 2026-05-24)
+- [x] Phase 5.5: UX-REVIEW (시범 채점 7.4/10, 2026-06-07)
+- [x] Phase 5.7: QA (전수 QA 통과, 2026-06-09)
+- [x] Phase 6: SHIP (v0.1.0, 2026-05-24)
+- [x] Phase 7: POST-SHIP (2026-05-24)
 
-> CHECKPOINT는 phase 제외 (ADR-009, cross-cutting). REVIEW=phase 4 (ADR-010).
-> FEASIBILITY=0.5 (ADR-011/012), UX-REVIEW=4.5 (ADR-013), QA=4.7 (ADR-015) — 모두 soft gate.
-> 0.5·4.5는 출시 후 신설, 사후 검증 완료 — 이력 정직성.
+> CHECKPOINT는 phase 제외 (ADR-009, cross-cutting). REVIEW=phase 5 (ADR-010).
+> INQUIRY=0 (v0.12.0 신설, Claude 직접 리서치). FEASIBILITY=1.5, UX-REVIEW=5.5, QA=5.7 — 모두 soft gate.
+> INQUIRY·FEASIBILITY·UX는 출시 후 신설/사후 정리 — 이력 정직성.
 
 ## Build target
 - type: vscode-extension
