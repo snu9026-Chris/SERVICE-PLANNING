@@ -14,6 +14,7 @@ import { extractDesignTokens } from '../src/webview/design-tokens';
 import { detectBuildTarget, explicitBuildTarget } from '../src/parser/build-target';
 import { renderQaPage } from '../src/webview/pages/qa';
 import { renderErrorsPage } from '../src/webview/pages/errors';
+import { renderGuidePage } from '../src/webview/pages/guide';
 
 const ROOT = path.resolve(__dirname, '..');
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf-8');
@@ -81,6 +82,16 @@ try {
   htmlSane(S, 'roadmap 있음', renderPlanPage(state, roadmap));
   htmlSane(S, 'roadmap 없음(null)', renderPlanPage(state, null));
   htmlSane(S, 'state null', renderPlanPage(null, roadmap));
+  // "지금 만드는 것" 칸 — PRODUCT one-liner 추출
+  const prod = '# PRODUCT\n\n## One-liner\n테스트 한 줄 설명입니다.\n';
+  htmlSane(S, '프로젝트 요약(있음)', renderPlanPage(state, roadmap, prod), ['지금 만드는 것', '테스트 한 줄 설명']);
+  htmlSane(S, '프로젝트 요약(미정)', renderPlanPage(state, roadmap, null), ['지금 만드는 것']);
+  // 미결 항목 배너 — in_progress phase의 [ ] 항목
+  const inProgState = parseState('# Blueprint State — T\n\n## Progress\n- [◐] Phase 2: DESIGN\n');
+  const synthRoadmap = '## Phase 2 — DESIGN\n- [ ] 축1 기능\n- [x] 축2\n- [ ] 축3 화면\n';
+  htmlSane(S, '미결 배너 표시', renderPlanPage(inProgState, synthRoadmap), ['미결', '축1 기능']);
+  const doneRoadmap = '## Phase 2 — DESIGN\n- [x] 축1\n- [x] 축2\n';
+  assert(S, !renderPlanPage(inProgState, doneRoadmap).includes('plan-incomplete'), '미결 0이면 배너 없음');
 } catch (e) {
   fail('Webview · Plan 탭', `예외: ${String(e)}`);
 }
@@ -97,7 +108,7 @@ try {
   };
   htmlSane(S, '전체 산출물', renderSpecPage(artifacts, undefined, undefined), ['NON-GOALS']);
   htmlSane(S, 'product 포커스', renderSpecPage(artifacts, undefined, 'product'));
-  htmlSane(S, '전부 null', renderSpecPage({ product: null, feasibility: null, design: null, architecture: null, uxQuality: null }, undefined, undefined));
+  htmlSane(S, '전부 null', renderSpecPage({ inquiry: null, product: null, feasibility: null, design: null, architecture: null, uxQuality: null }, undefined, undefined));
 } catch (e) {
   fail('Webview · Spec 탭', `예외: ${String(e)}`);
 }
@@ -314,6 +325,17 @@ try {
   htmlSane(S, '히스토리 있음', renderErrorsPage('# Error History\n\n## 2026-06-09 12:00 — 샘플\n- Status: RESOLVED'), ['에러 히스토리']);
 } catch (e) {
   fail('Webview · Errors 탭', `예외: ${String(e)}`);
+}
+
+// ── 7) Guide 페이지 (ADR-017) ────────────────────────────
+try {
+  const S = 'Webview · Guide 탭';
+  const html = renderGuidePage();
+  htmlSane(S, '렌더', html, ['GUIDE', 'INQUIRY', 'POST-SHIP', '최신 업데이트']);
+  assert(S, html.includes('Phase 0') && html.includes('Phase 7'), '단계별 0~7 모두 포함');
+  assert(S, html.includes('v0.13.0'), '최신 버전 변경이력 포함');
+} catch (e) {
+  fail('Webview · Guide 탭', `예외: ${String(e)}`);
 }
 
 // ── 결과 출력 ────────────────────────────────────────────

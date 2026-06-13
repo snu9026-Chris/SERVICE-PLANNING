@@ -1,9 +1,5 @@
 # Roadmap — 대시보드 확장 프로그램
 
-> Phase별 sub-task 체크리스트. 가운데 webview의 **Plan 페이지**가 이 파일 풀-너비 렌더 + state.md 현재 phase와 연동해 현재 위치 강조.
->
-> 체크박스는 .md 직접 수정으로만 변경 (단방향 .md → UI).
-
 ## Phase 0 — PRODUCT
 - [x] One-liner
 - [x] Target user (페르소나 1명)

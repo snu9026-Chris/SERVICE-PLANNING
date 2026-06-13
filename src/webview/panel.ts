@@ -25,12 +25,13 @@ import { renderSpecPage, SpecArtifacts, SpecActiveSelection, SpecFolderKey } fro
 import { renderPreviewPage, PreviewContent, PreviewDesignFile } from './pages/preview';
 import { renderQaPage } from './pages/qa';
 import { renderErrorsPage } from './pages/errors';
+import { renderGuidePage } from './pages/guide';
 import { makeNonce, escapeHtml } from './shared';
 
 const VIEW_TYPE = 'blueprintDashboard';
 const PANEL_TITLE = 'Blueprint Dashboard';
 
-export type TabId = 'plan' | 'spec' | 'preview' | 'qa' | 'errors';
+export type TabId = 'plan' | 'spec' | 'preview' | 'qa' | 'errors' | 'guide';
 
 const TAB_LABELS: Record<TabId, string> = {
   plan: 'Plan',
@@ -38,9 +39,10 @@ const TAB_LABELS: Record<TabId, string> = {
   preview: 'Preview',
   qa: 'QA',
   errors: 'Errors',
+  guide: 'Guide',
 };
 
-const TAB_ORDER: TabId[] = ['plan', 'spec', 'preview', 'qa', 'errors'];
+const TAB_ORDER: TabId[] = ['plan', 'spec', 'preview', 'qa', 'errors', 'guide'];
 
 export interface BlueprintWebviewPanelCallbacks {
   /** Errors 페이지에서 "에러 히스토리 시작" 버튼 클릭 시 호출 */
@@ -130,7 +132,8 @@ export class BlueprintWebviewPanel {
 
   setSpecArtifacts(artifacts: Partial<SpecArtifacts>): void {
     this.specArtifacts = { ...this.specArtifacts, ...artifacts };
-    if (this.panel && this.activeTab === 'spec') this.refresh();
+    // Spec 탭은 물론, Plan 탭도 PRODUCT/INQUIRY로 "지금 만드는 것" 칸을 그리므로 갱신
+    if (this.panel && (this.activeTab === 'spec' || this.activeTab === 'plan')) this.refresh();
   }
 
   setDesignFiles(files: PreviewDesignFile[]): void {
@@ -273,6 +276,16 @@ export class BlueprintWebviewPanel {
       });
     });
 
+    // Guide 파이프라인 — 단계 클릭 시 우측 상세 전환 (클라이언트 측 토글, 서버 round-trip 불필요)
+    document.querySelectorAll('[data-guide-step]').forEach(el => {
+      el.addEventListener('click', () => {
+        const k = el.getAttribute('data-guide-step');
+        document.querySelectorAll('[data-guide-step]').forEach(s => s.classList.toggle('active', s === el));
+        document.querySelectorAll('[data-guide-detail]').forEach(d =>
+          d.classList.toggle('active', d.getAttribute('data-guide-detail') === k));
+      });
+    });
+
     // Spec explorer — 섹션 클릭
     document.querySelectorAll('[data-spec-select]').forEach(el => {
       el.addEventListener('click', () => {
@@ -373,7 +386,7 @@ export class BlueprintWebviewPanel {
   private renderActivePage(): string {
     switch (this.activeTab) {
       case 'plan':
-        return renderPlanPage(this.currentState, this.roadmapMd);
+        return renderPlanPage(this.currentState, this.roadmapMd, this.specArtifacts.product, this.specArtifacts.inquiry);
       case 'spec':
         return renderSpecPage(this.specArtifacts, this.specActive, this.specFocus);
       case 'preview':
@@ -382,6 +395,8 @@ export class BlueprintWebviewPanel {
         return renderQaPage(this.qaReportMd);
       case 'errors':
         return renderErrorsPage(this.errorHistoryMd);
+      case 'guide':
+        return renderGuidePage();
     }
   }
 

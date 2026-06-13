@@ -185,6 +185,8 @@ V0~V3은 `resume` 모드만 실제 동작. 나머지 두 모드는 안내 메시
 | 010 | 2026-05-30 | REVIEW를 phase로 박음 — IMPLEMENT와 SHIP 사이. Phase 7개. SHIP 전 hard gate. |
 | 014 | 2026-06-09 | 가운데 webview에 QA 탭 추가 (Preview↔Errors). qa.report.md 단방향 렌더 + `npm run qa` 하네스. 5페이지. |
 | 015 | 2026-06-09 | QA를 파이프라인 phase로 추가 (4.7, UX-REVIEW↔SHIP). SHIP 직전 최종 검증 게이트. ADR-012 동적 리스트라 state.md 한 줄로 반영. |
+| 016 | 2026-06-10 | BUILD TARGET 배지 (하이브리드: state.md 명시 + 자동감지). `build-target.ts` 순수 로직. |
+| 017 | 2026-06-12 | Guide 탭 추가 (Errors 오른쪽). 도구 문서(기능·단계별·변경이력) 내장 렌더 — .md→UI 원칙의 명시적 예외. 6페이지. |
 
 세부는 `docs/adr/ADR-{NNN}.md` 풀 파일 (006~008은 별도 파일 작성됨)
 

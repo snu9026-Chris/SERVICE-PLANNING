@@ -2378,3 +2378,83 @@ html, body {
 @media (max-width: 720px) {
   .qa-verdict { margin-left: 0; width: 100%; justify-content: center; }
 }
+
+/* Plan 탭 "지금 만드는 것" 칸 — 빌딩 중인 프로젝트 한 줄 설명 */
+.plan-building-card {
+  margin: 0 0 22px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.10), rgba(139, 92, 246, 0.07));
+  border: 1px solid rgba(59, 130, 246, 0.20);
+}
+.plan-building-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #2563eb;
+  margin-bottom: 7px;
+}
+.plan-building-text {
+  font-size: 15px;
+  line-height: 1.55;
+  color: #1f2937;
+}
+.plan-building-text.muted {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* Plan 탭 미결 항목 경고 배너 */
+.plan-incomplete {
+  margin: 0 0 18px;
+  padding: 11px 16px;
+  border-radius: 11px;
+  background: #fff7ed;
+  border: 1px solid #fde0b8;
+  color: #92400e;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.plan-incomplete b { color: #b45309; }
+.plan-incomplete-sub { color: #b9893f; }
+
+/* Guide 탭 파이프라인 — 세로 스테퍼 + 우측 상세 (ADR-017, 시안 1) */
+.guide-pipeline-hint { font-size: 12.5px; color: #6b7280; margin: -2px 0 16px; }
+.guide-pipeline { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
+.guide-flow { display: flex; flex-direction: column; }
+.guide-step {
+  width: 100%; text-align: left; cursor: pointer; font: inherit;
+  background: #fbfcfe; border: 1px solid #e4e7ec; border-radius: 12px;
+  padding: 10px 13px; display: flex; align-items: center; gap: 10px;
+}
+.guide-arrow { height: 16px; display: flex; justify-content: center; }
+.guide-arrow::before { content: "↓"; color: #c0c6d0; font-size: 14px; }
+.guide-num {
+  width: 25px; height: 25px; flex: none; border-radius: 7px; display: grid; place-items: center;
+  font-size: 11px; font-weight: 800; color: #fff;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+}
+.guide-step-body { display: flex; flex-direction: column; line-height: 1.3; }
+.guide-step-nm { font-size: 13px; font-weight: 700; color: #1f2430; }
+.guide-step-ds { font-size: 10.5px; color: #6b7280; }
+.guide-step.active {
+  border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
+  background: linear-gradient(135deg, rgba(59, 130, 246, .07), rgba(99, 102, 241, .05));
+}
+.guide-step.soft { margin-left: 28px; padding: 6px 11px; border-style: dashed; }
+.guide-step.soft .guide-num { width: 21px; height: 21px; font-size: 9.5px; background: #fff7ed; color: #f59e0b; border: 1px dashed #f59e0b; }
+.guide-step.soft .guide-step-nm { font-size: 11.5px; font-weight: 600; color: #92400e; }
+.guide-soft-tag { margin-left: auto; font-size: 9px; font-weight: 700; color: #f59e0b; background: #fff7ed; padding: 2px 6px; border-radius: 5px; }
+
+.guide-detail-wrap { position: sticky; top: 12px; }
+.guide-detail-panel { display: none; background: #fff; border: 1px solid #e4e7ec; border-radius: 16px; padding: 20px 22px; }
+.guide-detail-panel.active { display: block; }
+.guide-d-num { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; color: #fff; font-weight: 800; font-size: 12px; background: linear-gradient(135deg, #3b82f6, #6366f1); margin-bottom: 10px; }
+.guide-d-title { font-size: 16px; margin: 0 0 3px; }
+.guide-d-tag { font-size: 12px; color: #3b82f6; font-weight: 600; margin-bottom: 10px; }
+.guide-d-purpose { font-size: 13.5px; color: #374151; }
+.guide-d-lines { margin: 10px 0 0; padding-left: 18px; }
+.guide-d-lines li { font-size: 12.5px; color: #374151; margin-bottom: 5px; }
+.guide-d-out { margin-top: 12px; font-size: 12px; color: #6b7280; }
+.guide-d-out code { background: #f1f3f6; padding: 1px 6px; border-radius: 5px; color: #be123c; }
+@media (max-width: 720px) { .guide-pipeline { grid-template-columns: 1fr; } .guide-detail-wrap { position: static; } }

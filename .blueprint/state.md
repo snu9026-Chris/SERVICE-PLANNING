@@ -25,7 +25,7 @@
 - confidence: locked
 
 ## Next action
-v0.11.0 설치+리로드 후 BUILD TARGET 배지가 explicit(state.md 명시)로 뜨는지 + tooltip에 run/dist 실측. JTBD 5/5 ✅. 백로그: a11y 키보드 내비(UX-QUALITY.md), phase-click affordance.
+v0.13.0 설치+리로드 후 Guide 탭(Errors 오른쪽)에 단계별·변경이력 뜨는지 확인. 백로그: a11y 키보드 내비(UX-QUALITY.md), phase-click affordance, 다른 PC 스킬 동기화.
 
 ## Decisions log
 - 2026-05-22~24: 초기 결정 — Antigravity extension, 단방향 .md→UI, AI 호출 X, V0 사이드바→V0+ webview, init/retrofit 모드. ADR-001~008. Phase 4 checkpoint 1회(checkpoint-2026-05-24.md).
@@ -33,6 +33,7 @@ v0.11.0 설치+리로드 후 BUILD TARGET 배지가 explicit(state.md 명시)로
 - 2026-06-09: ADR-014 — webview QA 탭 추가(Preview↔Errors), qa.report.md 단방향 렌더 + npm run qa 하네스(87/87 PASS). 전수 QA: 빌드·파서·5탭·패키징 통과, .qa-tmp 패키지 누출 발견·수정.
 - 2026-06-10: Phase 0.5 FEASIBILITY 사후검증(JTBD ✅3/⚠️2/❌0) → 명세-구현 간극 2건 발견, 결정 A로 둘 다 구현 — JTBD3 활동바 배지(`computeTriggerBadge`), JTBD5 디자인토큰 패널(`extractDesignTokens`). 둘 다 순수함수+하네스. FEASIBILITY 5/5 ✅. docs/FEASIBILITY.md. (v0.9.7→0.9.9)
 - 2026-06-10: ADR-016 BUILD TARGET — Hero phase 위 산출물 타입 배지(하이브리드: state.md 명시 우선 + package.json/tauri/index.html 자동감지, `build-target.ts` 순수). + blueprint 스킬 Phase 0 TARGET 인터뷰 신설(2축 type+run/dist, state.md/PRODUCT 템플릿 슬롯). 하네스 142/142. (v0.10.0→0.11.0)
+- 2026-06-12: Phase 0 INQUIRY 신설 — blueprint 스킬 v2(INQUIRY 절차+RESUME 자동백필, 전체 phase +1, 별도 public repo) + 대시보드 연동(spec/panel/extension)·docs/design 라이브갱신. ADR-017 Guide 탭(Errors 오른쪽, 기능·단계별·변경이력 내장, .md→UI 예외). 하네스 153/153. (v0.12.0→0.13.0)
 
 ## Counters
 - ships_since_checkpoint: 1

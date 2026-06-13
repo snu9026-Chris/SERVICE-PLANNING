@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>Guide 파이프라인 시안 1 · 세로 스테퍼 + 상세</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #ffffff; --ink: #1f2430; --sub: #6b7280;
+    --line: #e4e7ec; --blue: #3b82f6; --blue2: #6366f1; --soft: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Pretendard Variable", Pretendard, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--ink); padding: 28px; line-height: 1.5;
+  }
+  .head { margin-bottom: 22px; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--blue); }
+  h1 { font-size: 22px; margin: 4px 0 2px; }
+  .head p { color: var(--sub); font-size: 13px; }
+
+  .layout { display: grid; grid-template-columns: 300px 1fr; gap: 26px; align-items: start; }
+
+  /* 좌측 — 박스 + 화살표 스테퍼 */
+  .flow { position: relative; }
+  .step {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 11px 14px; display: flex; align-items: center; gap: 11px;
+    box-shadow: 0 1px 2px rgba(16,24,40,.04); cursor: default;
+  }
+  .step + .arrow { height: 18px; display: flex; justify-content: center; }
+  .arrow::before { content: "↓"; color: #c0c6d0; font-size: 15px; }
+  .num {
+    width: 26px; height: 26px; flex: none; border-radius: 8px; display: grid; place-items: center;
+    font-size: 11px; font-weight: 800; color: #fff;
+    background: linear-gradient(135deg, var(--blue), var(--blue2));
+  }
+  .step .nm { font-size: 13.5px; font-weight: 700; }
+  .step .ds { font-size: 11px; color: var(--sub); }
+  .step.active {
+    border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    background: linear-gradient(135deg, rgba(59,130,246,.06), rgba(99,102,241,.05));
+  }
+  /* 소프트 게이트 — 작게, 점선, 우측으로 살짝 들여쓰기 */
+  .soft { margin-left: 30px; padding: 7px 12px; border-style: dashed; }
+  .soft .num { background: #fff7ed; color: var(--soft); border: 1px dashed var(--soft); width: 22px; height: 22px; font-size: 10px; }
+  .soft .nm { font-size: 12px; font-weight: 600; color: #92400e; }
+  .soft-tag { margin-left: auto; font-size: 9.5px; font-weight: 700; color: var(--soft); background: #fff7ed; padding: 2px 6px; border-radius: 5px; }
+
+  /* 우측 — 선택 단계 상세 */
+  .detail {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px 24px;
+    box-shadow: 0 2px 8px rgba(16,24,40,.05); position: sticky; top: 28px;
+  }
+  .detail .d-num {
+    display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 9px;
+    color: #fff; font-weight: 800; font-size: 13px; background: linear-gradient(135deg, var(--blue), var(--blue2)); margin-bottom: 12px;
+  }
+  .detail h2 { font-size: 19px; margin-bottom: 2px; }
+  .detail .tag { font-size: 12px; color: var(--blue); font-weight: 600; }
+  .rows { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .row { display: grid; grid-template-columns: 70px 1fr; gap: 12px; font-size: 13px; }
+  .row .k { color: var(--sub); font-weight: 600; }
+  .axis { background: #f8f9fb; border: 1px solid var(--line); border-radius: 9px; padding: 9px 12px; font-size: 12.5px; }
+  .axis b { color: var(--blue2); }
+  code { background: #f1f3f6; padding: 1px 6px; border-radius: 5px; font-size: 12px; color: #be123c; }
+  .hint { margin-top: 14px; font-size: 11.5px; color: var(--sub); }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="eyebrow">GUIDE · 시안 1 — 세로 스테퍼</div>
+    <h1>파이프라인 단계별</h1>
+    <p>좌측 박스+화살표로 진행을 보고, 단계를 고르면 우측에 상세가 뜹니다.</p>
+  </div>
+
+  <div class="layout">
+    <!-- 좌측 도식 -->
+    <div class="flow">
+      <div class="step"><span class="num">0</span><div><div class="nm">INQUIRY</div><div class="ds">리서치 기반 발견</div></div></div>
+      <div class="arrow"></div>
+      <div class="step"><span class="num">1</span><div><div class="nm">PRODUCT</div><div class="ds">무엇을 만들지 확정</div></div></div>
+      <div class="step soft"><span class="num">1.5</span><div><div class="nm">FEASIBILITY</div></div><span class="soft-tag">soft</span></div>
+      <div class="arrow"></div>
+      <div class="step active"><span class="num">2</span><div><div class="nm">DESIGN</div><div class="ds">3축 상세화 · 시안</div></div></div>
+      <div class="arrow"></div>
+      <div class="step"><span class="num">3</span><div><div class="nm">ARCHITECTURE</div><div class="ds">구조 잠금</div></div></div>
+      <div class="arrow"></div>
+      <div class="step"><span class="num">4</span><div><div class="nm">IMPLEMENT</div><div class="ds">구현</div></div></div>
+      <div class="arrow"></div>
+      <div class="step"><span class="num">5</span><div><div class="nm">REVIEW</div><div class="ds">검토</div></div></div>
+      <div class="step soft"><span class="num">5.5</span><div><div class="nm">UX-REVIEW</div></div><span class="soft-tag">soft</span></div>
+      <div class="step soft"><span class="num">5.7</span><div><div class="nm">QA</div></div><span class="soft-tag">soft</span></div>
+      <div class="arrow"></div>
+      <div class="step"><span class="num">6</span><div><div class="nm">SHIP</div><div class="ds">출시</div></div></div>
+      <div class="arrow"></div>
+      <div class="step"><span class="num">7</span><div><div class="nm">POST-SHIP</div><div class="ds">사후</div></div></div>
+    </div>
+
+    <!-- 우측 상세 (선택: DESIGN) -->
+    <div class="detail">
+      <span class="d-num">2</span>
+      <h2>DESIGN — 보이는 것 설계</h2>
+      <div class="tag">3축 상세화 · 수행: /design-consultation</div>
+      <div class="rows">
+        <div class="row"><span class="k">목적</span><span>디자인 시스템 정한 뒤 기획을 3축으로 펼쳐 하위 항목 정의 → 집중 질의 → 시안</span></div>
+        <div class="axis"><b>축1 기능 상세</b> — 트리거/입력/출력/상태로 분해</div>
+        <div class="axis"><b>축2 UX 플로우</b> — 진입·전환·분기·빈/에러/완료 상태</div>
+        <div class="axis"><b>축3 화면 기획</b> — 화면별 컴포넌트 → JBT 매핑</div>
+        <div class="row"><span class="k">산출물</span><span><code>docs/DESIGN.md</code> + <code>docs/design/screenshots/*.html</code></span></div>
+        <div class="row"><span class="k">마무리</span><span>확정 화면을 플로우 순서대로 시안 → Preview 탭에 흐름순 노출</span></div>
+      </div>
+      <div class="hint">← 좌측에서 다른 단계를 누르면 그 단계의 상세로 바뀝니다 (실제 구현 시 클릭 동작).</div>
+    </div>
+  </div>
+</body>
+</html>
