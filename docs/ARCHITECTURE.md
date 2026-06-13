@@ -179,6 +179,7 @@ V0~V3은 `resume` 모드만 실제 동작. 나머지 두 모드는 안내 메시
 | 016 | 2026-06-10 | BUILD TARGET 배지 (하이브리드: state.md 명시 + 자동감지). `build-target.ts` 순수 로직. |
 | 017 | 2026-06-12 | Guide 탭 추가 (Errors 오른쪽). 도구 문서(기능·단계별·변경이력) 내장 렌더 — .md→UI 원칙의 명시적 예외. 6페이지. |
 | 018 | 2026-06-12 | 통신: 전면 이벤트 버스(ADR-004) 대신 orchestrator 직접 메서드 호출 채택 — V0~V3 규모엔 이벤트 버스가 과함. file-watcher만 EventEmitter. 도메인 간 직접 import는 여전히 금지. (문서-구현 정합) |
+| 019 | 2026-06-12 | 캐노니컬 phase ghost — 옛 파이프라인 프로젝트에 빠진 표준 phase를 사이드바 "미반영" ghost로 표시(표시 전용) + `/blueprint` 백필을 전체 캐노니컬 재조정으로 확장. `CANONICAL_PHASES` 상수는 ADR-012의 부분 예외. |
 
 세부는 `docs/adr/ADR-{NNN}.md` 풀 파일 (006~008은 별도 파일 작성됨)
 

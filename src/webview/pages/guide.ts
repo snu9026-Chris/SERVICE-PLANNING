@@ -96,6 +96,7 @@ const REST_MD = `
 - **디자인 시안 보기**: \`docs/design/screenshots/<이름>.html\` 로 저장하면 Preview 탭에 자동 노출 (브라우저 안 띄움)
 
 ## 최신 업데이트
+- **v0.15.0** — 옛 파이프라인 프로젝트도 전체 phase 표시(사이드바 "미반영" ghost) + 스킬 백필 전체 캐노니컬 재조정
 - **v0.14.0** — 문서 동기화(README/ARCHITECTURE/roadmap) + 사이드바 접근성(키보드·focus·chevron) + 현재 phase 미결 배지
 - **v0.13.0** — Guide 탭 신설(단계별 스테퍼) + DESIGN 3축 상세화 + Plan "지금 만드는 것" 칸 + 미결 항목 게이트(전환 전 알림)
 - **v0.12.0** — Phase 0 INQUIRY 대시보드 연동 + \`docs/design/\` 어느 폴더든 저장 즉시 Preview 갱신

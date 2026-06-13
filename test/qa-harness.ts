@@ -15,7 +15,7 @@ import { detectBuildTarget, explicitBuildTarget } from '../src/parser/build-targ
 import { renderQaPage } from '../src/webview/pages/qa';
 import { renderErrorsPage } from '../src/webview/pages/errors';
 import { renderGuidePage } from '../src/webview/pages/guide';
-import { getActivePhaseOrNull, incompletePhaseItems } from '../src/types';
+import { getActivePhaseOrNull, incompletePhaseItems, missingCanonicalPhases } from '../src/types';
 
 const ROOT = path.resolve(__dirname, '..');
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf-8');
@@ -350,6 +350,13 @@ try {
   const rm = '## Phase 5 — REVIEW\n- [ ] r1\n## Phase 5.5 — UX-REVIEW\n- [ ] u1\n- [ ] u2\n';
   assert(S, incompletePhaseItems(rm, 'REVIEW').length === 1, 'REVIEW 정확 매칭 (UX-REVIEW 분리)');
   assert(S, incompletePhaseItems(rm, 'UX-REVIEW').length === 2, 'UX-REVIEW 정확 매칭');
+  // 미반영 캐노니컬 phase (옛 파이프라인 프로젝트)
+  const oldProj = parseState('# Blueprint State — T\n\n## Progress\n- [x] Phase 0: PRODUCT\n- [ ] Phase 1: DESIGN\n');
+  const miss = missingCanonicalPhases(oldProj.phases).map(p => p.name);
+  assert(S, miss.includes('INQUIRY'), '옛 프로젝트: INQUIRY 미반영 감지');
+  assert(S, !miss.includes('PRODUCT'), '이미 있는 phase는 미반영 아님');
+  const full = parseState('# Blueprint State — T\n\n## Progress\n- [x] Phase 0: INQUIRY\n- [x] Phase 1: PRODUCT\n- [x] Phase 2: DESIGN\n- [x] Phase 3: ARCHITECTURE\n- [x] Phase 4: IMPLEMENT\n- [x] Phase 5: REVIEW\n- [x] Phase 6: SHIP\n- [x] Phase 7: POST-SHIP\n');
+  assert(S, missingCanonicalPhases(full.phases).length === 0, '전체 캐노니컬 있으면 미반영 0');
 } catch (e) {
   fail('types 헬퍼', `예외: ${String(e)}`);
 }

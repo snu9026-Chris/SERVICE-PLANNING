@@ -171,6 +171,32 @@ export interface SidebarPayload {
  * - 없으면 마지막 done의 다음 phase (pending 첫 번째)
  * - 다 done이면 마지막 phase
  */
+/**
+ * 캐노니컬 파이프라인 (blueprint state.md.tmpl과 동일해야 함, ADR-019).
+ * 소프트 게이트(FEASIBILITY/UX-REVIEW/QA)는 선택이라 제외 — 누락돼도 ghost 안 띄움.
+ * ⚠️ 스킬 템플릿 phase가 바뀌면 이 배열도 같이 갱신 (drift 주의).
+ */
+export const CANONICAL_PHASES: ReadonlyArray<{ key: string; name: string }> = [
+  { key: '0', name: 'INQUIRY' },
+  { key: '1', name: 'PRODUCT' },
+  { key: '2', name: 'DESIGN' },
+  { key: '3', name: 'ARCHITECTURE' },
+  { key: '4', name: 'IMPLEMENT' },
+  { key: '5', name: 'REVIEW' },
+  { key: '6', name: 'SHIP' },
+  { key: '7', name: 'POST-SHIP' },
+];
+
+/**
+ * state.md에 (이름 기준) 빠진 캐노니컬 phase 목록. 옛 파이프라인으로 시작한
+ * 진행 중 프로젝트에서 "아직 반영 안 된 단계"를 대시보드에 ghost로 보여주기 위함.
+ * 번호가 아니라 *이름*으로 비교 (옛 프로젝트는 번호가 달라서).
+ */
+export function missingCanonicalPhases(statePhases: Phase[]): Array<{ key: string; name: string }> {
+  const have = new Set(statePhases.map(p => p.name));
+  return CANONICAL_PHASES.filter(c => !have.has(c.name));
+}
+
 export function getActivePhase(state: BlueprintState): Phase {
   const inProgress = state.phases.find(p => p.status === 'in_progress');
   if (inProgress) return inProgress;

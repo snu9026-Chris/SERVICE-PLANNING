@@ -649,6 +649,42 @@ html, body {
 .phase-row:hover .phase-chevron,
 .phase-row:focus-visible .phase-chevron { opacity: 0.7; }
 
+/* 미반영(ghost) phase 그룹 — state.md에 아직 없는 캐노니컬 단계 */
+.phase-ghost-group {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #d2d2d7;
+}
+.phase-ghost-note {
+  font-size: 10px;
+  color: #98989d;
+  padding: 2px 4px 5px;
+}
+.phase-ghost-note code {
+  font-size: 9.5px;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+.phase-row.ghost {
+  opacity: 0.6;
+  cursor: default;
+}
+.phase-row.ghost:hover { background: transparent; }
+.phase-circle.ghost {
+  background: transparent;
+  border: 1.5px dashed #c7c7cc;
+}
+.phase-ghost-tag {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 700;
+  color: #98989d;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+
 /* CURRENT FOCUS 미결 항목 배지 */
 .focus-incomplete {
   margin-left: 8px;

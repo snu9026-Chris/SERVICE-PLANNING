@@ -4,6 +4,13 @@
 
 형식: [Keep a Changelog](https://keepachangelog.com/) + [Semantic Versioning](https://semver.org/).
 
+## [0.15.0] — 2026-06-12
+
+### Added (옛 파이프라인 프로젝트의 전체 phase 가시화 — ADR-019)
+- **사이드바 "미반영" ghost 그룹** — INQUIRY 신설 이전에 시작한 프로젝트처럼 state.md에 빠진 캐노니컬 phase를 점선·흐림 ghost 행으로 표시(`CANONICAL_PHASES`/`missingCanonicalPhases`, 표시 전용 — 진행도·번호 안 건드림, 충돌 없음). `/blueprint` 실행 CTA 포함.
+- **스킬 phase 동기화 확장** — `/blueprint` RESUME 백필을 INQUIRY-only → **전체 캐노니컬 재조정**으로: 이름 기준 대조 → 빠진 phase 미완 `[ ]` 추가(절대 done 아님) + 기존 상태 보존 + 재번호.
+- 하네스 +3단언 → **178/178 PASS**.
+
 ## [0.14.0] — 2026-06-12
 
 ### Changed (완결성 — 문서 동기화 + 품질/접근성)

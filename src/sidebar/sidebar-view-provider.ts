@@ -23,6 +23,7 @@ import {
   getActivePhase,
   getActivePhaseOrNull,
   computeTriggerBadge,
+  missingCanonicalPhases,
 } from '../types';
 
 export const SIDEBAR_VIEW_ID = 'blueprintState';
@@ -214,10 +215,33 @@ function renderBuildTarget(bt: BuildTarget | null): string {
 }
 
 function renderPhases(phases: Phase[]): string {
+  // 옛 파이프라인으로 시작한 프로젝트: state.md에 없는 캐노니컬 phase를
+  // "미반영" ghost 그룹으로 (충돌 방지 위해 실제 목록과 분리). /blueprint 실행 시 정식 추가됨.
+  const missing = missingCanonicalPhases(phases);
+  const ghostHtml =
+    missing.length === 0
+      ? ''
+      : `
+      <div class="phase-ghost-group">
+        <div class="phase-ghost-note">아직 state.md에 없는 단계 · <code>/blueprint</code> 실행 시 추가</div>
+        ${missing.map(renderGhostRow).join('')}
+      </div>`;
   return `
     <div class="card">
       <div class="card-heading">PHASES</div>
       ${phases.map(renderPhaseRow).join('')}
+      ${ghostHtml}
+    </div>`;
+}
+
+/** 미반영(ghost) phase 행 — 클릭 불가, 미완 시각화. */
+function renderGhostRow(c: { key: string; name: string }): string {
+  return `
+    <div class="phase-row ghost" aria-label="${escapeHtml(c.name)} (아직 반영 안 됨)">
+      <div class="phase-circle ghost"></div>
+      <span class="phase-id">P${escapeHtml(c.key)}</span>
+      <span class="phase-name">${escapeHtml(c.name)}</span>
+      <span class="phase-ghost-tag">미반영</span>
     </div>`;
 }
 

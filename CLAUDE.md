@@ -27,6 +27,7 @@ PRODUCT.md 또는 ARCHITECTURE.md가 비어있거나 템플릿 그대로면 코�
 
 ### 디자인 시안은 항상 Preview 패널로
 사용자와 상의해서 만드는 디자인 시안(HTML)은 **반드시 `docs/design/screenshots/<이름>.html` 파일로 저장**한다. 그러면 확장의 Preview 탭 갤러리에 자동으로 떠서, 카드를 클릭하면 우측 패널 안 iframe으로 인라인 렌더링된다.
+- **항상 HTML/CSS로 직접 작성한다.** PNG·스크린샷·이미지 파일·말로만 설명·브라우저 캡처는 금지 — *실제 만드는 프로그램과 같은 매체(살아있는 HTML)*로 그려야 Preview에 그대로 뜨고 시안=구현 간극이 없다. (갤러리는 `.html`만 수집하므로 이미지로 만들면 아예 안 보임)
 - 브라우저로 띄우거나(`/design-shotgun` 등) 임시 폴더에 두지 않는다 — 사용자는 Preview 패널에서 보길 원한다.
 - 파일명에 `mockup`이 들어가면 "Mockup · 검증 단계" 카테고리로, `sidebar`/`webview-*` prefix는 해당 카테고리로 자동 분류된다([preview.ts](src/webview/pages/preview.ts)의 `categorizeFile`).
 - `docs/design/` 하위 어느 폴더든 `.html` 저장 시 갤러리가 즉시 갱신된다([extension.ts](src/extension.ts) `handleFileChange`).
