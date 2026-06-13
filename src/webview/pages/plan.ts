@@ -6,7 +6,7 @@
  */
 
 import { renderChecklistMarkdown, escapeHtml } from '../shared';
-import { BlueprintState, getProgress } from '../../types';
+import { BlueprintState, getProgress, getActivePhase, getActivePhaseOrNull, incompletePhaseItems } from '../../types';
 
 export function renderPlanPage(
   state: BlueprintState | null,
@@ -50,9 +50,7 @@ export function renderPlanPage(
  */
 function renderIncompleteBanner(state: BlueprintState | null, roadmapMd: string | null): string {
   if (!state || !roadmapMd) return '';
-  const active =
-    state.phases.find(p => p.status === 'in_progress') ??
-    state.phases.find(p => p.status === 'pending');
+  const active = getActivePhaseOrNull(state);
   if (!active) return ''; // 전부 done
 
   const items = incompletePhaseItems(roadmapMd, active.name);
@@ -66,29 +64,6 @@ function renderIncompleteBanner(state: BlueprintState | null, roadmapMd: string 
       ⚠ 현재 <b>${escapeHtml(active.name)}</b> 미결 ${items.length}항목 — ${preview}
       <span class="plan-incomplete-sub">· 다음 단계 가기 전 정해주세요</span>
     </div>`;
-}
-
-/**
- * roadmap.md에서 `## Phase {n} — {NAME}` 섹션의 미완(`- [ ]`) 항목 라벨 목록을 반환.
- * 헤더의 phase 이름이 정확히 일치할 때만 (REVIEW가 UX-REVIEW에 오인 매칭되지 않도록).
- */
-function incompletePhaseItems(roadmapMd: string, phaseName: string): string[] {
-  const lines = roadmapMd.split(/\r?\n/);
-  const headerRe = /^##\s+Phase\s+[\d.]+\s*[—–-]\s*([A-Z][A-Z-]*)/;
-  const items: string[] = [];
-  let inSection = false;
-  for (const line of lines) {
-    const h = line.match(headerRe);
-    if (h) {
-      inSection = h[1] === phaseName;
-      continue;
-    }
-    if (line.startsWith('## ')) inSection = false; // 다른 ## 섹션 시작
-    if (!inSection) continue;
-    const m = line.match(/^\s*-\s*\[ \]\s*(.+)$/);
-    if (m) items.push(m[1].trim());
-  }
-  return items;
 }
 
 /**
@@ -135,10 +110,7 @@ function extractProjectSummary(productMd: string | null, inquiryMd: string | nul
 function renderHero(state: BlueprintState): string {
   const { done, total } = getProgress(state);
   const percent = total === 0 ? 0 : Math.round((done / total) * 100);
-  const active =
-    state.phases.find(p => p.status === 'in_progress') ??
-    state.phases.find(p => p.status === 'pending') ??
-    state.phases[state.phases.length - 1];
+  const active = getActivePhase(state);
 
   return `
     <div class="page-hero">

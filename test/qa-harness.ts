@@ -15,6 +15,7 @@ import { detectBuildTarget, explicitBuildTarget } from '../src/parser/build-targ
 import { renderQaPage } from '../src/webview/pages/qa';
 import { renderErrorsPage } from '../src/webview/pages/errors';
 import { renderGuidePage } from '../src/webview/pages/guide';
+import { getActivePhaseOrNull, incompletePhaseItems } from '../src/types';
 
 const ROOT = path.resolve(__dirname, '..');
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf-8');
@@ -336,6 +337,21 @@ try {
   assert(S, html.includes('v0.13.0'), '최신 버전 변경이력 포함');
 } catch (e) {
   fail('Webview · Guide 탭', `예외: ${String(e)}`);
+}
+
+// ── 8) types 공유 헬퍼 (Medium 리팩토링) ─────────────────
+try {
+  const S = 'types 헬퍼';
+  const allDone = parseState('# Blueprint State — T\n\n## Progress\n- [x] Phase 0: A\n- [x] Phase 1: B\n');
+  assert(S, getActivePhaseOrNull(allDone) === undefined, '전부 done이면 active = undefined');
+  const mid = parseState('# Blueprint State — T\n\n## Progress\n- [x] Phase 0: A\n- [◐] Phase 1: B\n- [ ] Phase 2: C\n');
+  assert(S, getActivePhaseOrNull(mid)?.name === 'B', 'in_progress 우선');
+  // REVIEW가 UX-REVIEW에 오인 매칭되지 않아야
+  const rm = '## Phase 5 — REVIEW\n- [ ] r1\n## Phase 5.5 — UX-REVIEW\n- [ ] u1\n- [ ] u2\n';
+  assert(S, incompletePhaseItems(rm, 'REVIEW').length === 1, 'REVIEW 정확 매칭 (UX-REVIEW 분리)');
+  assert(S, incompletePhaseItems(rm, 'UX-REVIEW').length === 2, 'UX-REVIEW 정확 매칭');
+} catch (e) {
+  fail('types 헬퍼', `예외: ${String(e)}`);
 }
 
 // ── 결과 출력 ────────────────────────────────────────────

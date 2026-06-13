@@ -1,16 +1,15 @@
 /**
- * Sidebar WebviewView Provider — V0+ 최종 6섹션 구조.
+ * Sidebar WebviewView Provider — 4섹션 구조.
  *
  * 섹션 (위→아래):
- *  1. Hero    — 프로젝트명 + 폴더 경로 + 현재 phase + progress bar
- *  2. Phases  — 7개 phase 리스트 (현재 강조)
- *  3. Current focus — state.md의 next action 텍스트 (지금 다루는 것)
- *  4. Triggers — fired 알림
- *  5. Active file — 지금 편집 중인 파일 경로
- *  6. Recent changes — 최근 변경된 파일들 (최대 6개, 시간순)
+ *  1. Hero    — 폴더 경로 + BUILD TARGET 배지 + 현재 phase + progress bar
+ *  2. Phases  — phase 리스트 (동적, state.md 그대로 — 현재 강조)
+ *  3. Current focus — 현재 phase + next action (+ 미결 항목 배지)
+ *  4. Recent changes — 최근 변경된 파일들 (카테고리별 dedup, 최대 6개)
  *
+ * 체크포인트 트리거는 별도 섹션이 아니라 **활동바 아이콘 배지**로(updateBadge).
  * 데이터: extension.ts가 SidebarPayload 빌드해서 update() 호출.
- * 클릭: Phase row 클릭 → 가운데 webview에 산출물 띄움.
+ * 클릭: Phase row 클릭(또는 Enter/Space) → 가운데 webview에 산출물 띄움.
  */
 
 import * as vscode from 'vscode';
@@ -21,6 +20,8 @@ import {
   RecentChange,
   BuildTarget,
   getProgress,
+  getActivePhase,
+  getActivePhaseOrNull,
   computeTriggerBadge,
 } from '../types';
 
@@ -118,9 +119,14 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
     document.querySelectorAll('[data-phase-key]').forEach(el => {
-      el.addEventListener('click', () => {
+      const fire = () => {
         const key = el.getAttribute('data-phase-key');
         if (key) vscode.postMessage({ type: 'phase-click', phaseKey: key });
+      };
+      el.addEventListener('click', fire);
+      // a11y: Enter/Space로도 활성화
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fire(); }
       });
     });
   </script>
@@ -142,7 +148,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
     return [
       renderHero(state, workspaceFolderName, workspaceFolderPath, buildTarget),
       renderPhases(state.phases),
-      renderCurrentFocus(state.nextAction, state.phases),
+      renderCurrentFocus(state.nextAction, state, payload.incompleteCount),
       renderRecentChanges(recentChanges),
     ].join('\n');
   }
@@ -160,10 +166,7 @@ function renderHero(
 ): string {
   const { done, total } = getProgress(state);
   const percent = total === 0 ? 0 : Math.round((done / total) * 100);
-  const active =
-    state.phases.find(p => p.status === 'in_progress') ??
-    state.phases.find(p => p.status === 'pending') ??
-    state.phases[state.phases.length - 1];
+  const active = getActivePhase(state);
 
   return `
     <div class="hero">
@@ -220,25 +223,35 @@ function renderPhases(phases: Phase[]): string {
 
 function renderPhaseRow(phase: Phase): string {
   const meta = phase.completedAt ?? phase.meta ?? '';
+  // a11y: div이지만 클릭 가능 → 키보드 포커스·활성화 가능하게 role/tabindex (Enter/Space는 스크립트)
   return `
-    <div class="phase-row ${phase.status}" data-phase-key="${escapeHtml(phase.key)}">
+    <div class="phase-row ${phase.status}" data-phase-key="${escapeHtml(phase.key)}"
+         role="button" tabindex="0" aria-label="Phase ${escapeHtml(phase.key)} ${escapeHtml(phase.name)} 열기">
       <div class="phase-circle ${phase.status}"></div>
       <span class="phase-id">P${escapeHtml(phase.key)}</span>
       <span class="phase-name">${escapeHtml(phase.name)}</span>
       <span class="phase-meta">${escapeHtml(meta)}</span>
+      <span class="phase-chevron" aria-hidden="true">›</span>
     </div>`;
 }
 
-function renderCurrentFocus(nextAction: string, phases: Phase[]): string {
-  const active =
-    phases.find(p => p.status === 'in_progress') ??
-    phases.find(p => p.status === 'pending');
+function renderCurrentFocus(
+  nextAction: string,
+  state: NonNullable<SidebarPayload['state']>,
+  incompleteCount: number,
+): string {
+  const active = getActivePhaseOrNull(state);
   const label = active ? `Phase ${active.key} · ${active.name}` : 'No active phase';
+  // 현재 phase에 roadmap 미결(`- [ ]`) 항목이 있으면 배지 (Plan 탭 배너와 동일 신호)
+  const badge =
+    incompleteCount > 0
+      ? `<span class="focus-incomplete" title="현재 phase 미결 ${incompleteCount}항목 — 다음 단계 전 정해주세요">미결 ${incompleteCount}</span>`
+      : '';
 
   return `
     <div class="card">
       <div class="card-heading">CURRENT FOCUS</div>
-      <div class="focus-label">${escapeHtml(label)}</div>
+      <div class="focus-label">${escapeHtml(label)}${badge}</div>
       <div class="focus-text">${escapeHtml(nextAction || '—')}</div>
     </div>`;
 }

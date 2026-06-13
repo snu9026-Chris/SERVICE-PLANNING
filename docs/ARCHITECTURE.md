@@ -56,22 +56,23 @@ DDD 정신 그대로. 작은 extension이라 도메인 5개로 충분.
 ├── src/
 │   ├── parser/
 │   │   ├── state.ts          ← .blueprint/state.md 파서
-│   │   ├── artifact.ts       ← PRODUCT/DESIGN/ARCH.md 파서
-│   │   └── design.ts         ← DESIGN.md hex/폰트 추출
+│   │   └── build-target.ts   ← BUILD TARGET 감지/명시 (순수, ADR-016)
 │   ├── file-watcher/
-│   │   └── watcher.ts
+│   │   └── watcher.ts        ← FS watch + debounce + EventEmitter
 │   ├── sidebar/
-│   │   ├── tree-data-provider.ts
-│   │   └── badge.ts
+│   │   ├── sidebar-view-provider.ts  ← Webview view 제공자 + 활동바 배지
+│   │   └── sidebar-styles.css
 │   ├── webview/
-│   │   ├── panel.ts          ← WebviewPanel 생명주기
-│   │   ├── renderer.ts       ← md → HTML 변환
-│   │   ├── styles.css        ← getdesign.md 차용
-│   │   └── client.js         ← webview 안 vanilla JS
-│   ├── extension.ts          ← activate / deactivate / event bus
-│   └── types.ts              ← 공유 타입 (BlueprintState, Phase, Trigger 등)
+│   │   ├── panel.ts          ← WebviewPanel 생명주기 + 탭 라우팅
+│   │   ├── pages/            ← plan / spec / preview / qa / errors / guide
+│   │   ├── design-tokens.ts  ← DESIGN.md 색/폰트 추출 (순수)
+│   │   ├── shared.ts         ← markdown 렌더 · escape · nonce
+│   │   └── styles.css
+│   ├── fonts/                ← Pretendard woff2 (번들)
+│   ├── extension.ts          ← activate / deactivate / orchestrator
+│   └── types.ts              ← 공유 타입 (BlueprintState, Phase, BuildTarget 등)
 ├── test/
-│   └── parser/state.test.ts
+│   └── qa-harness.ts         ← 순수 로직 단언 하네스 (npm run qa)
 ├── docs/                      ← 이 프로젝트 자체의 blueprint 산출물
 │   ├── PRODUCT.md
 │   ├── DESIGN.md
@@ -89,7 +90,7 @@ DDD 정신 그대로. 작은 extension이라 도메인 5개로 충분.
 | Entity | Owner | Shape 요약 |
 |---|---|---|
 | `BlueprintState` | parser | `{ project, phases: Phase[], next_action, counters, triggers: string[], settings }` |
-| `Phase` | parser | `{ id: 0..6, name, status: 'pending' \| 'in_progress' \| 'done', date? }` |
+| `Phase` | parser | `{ key: string, order: number, name, status, completedAt?, meta? }` — 동적 리스트(ADR-012), 개수·이름 고정 안 함 |
 | `Trigger` | parser | `{ condition: string, fired_at: Date }` |
 | `Artifact` | parser | `{ path, title, sections: Section[], html: string }` |
 | `DesignToken` | parser | `{ kind: 'color' \| 'font' \| 'spacing', value, description }` |
@@ -97,22 +98,12 @@ DDD 정신 그대로. 작은 extension이라 도메인 5개로 충분.
 
 모든 entity는 *immutable*. parser가 새 버전을 emit하면 sidebar/webview가 통째로 교체.
 
-## Inter-domain communication rule
+## Inter-domain communication rule (실구현 — ADR-018)
 
-**선택: 이벤트 버스만.** 도메인 간 직접 import 금지.
+**도메인 간 직접 import 금지 + orchestrator 경유.** parser·sidebar·webview는 서로를 import하지 않는다. `extension.ts`(orchestrator)가 가운데서 wire-up하고, 도메인 setter를 **직접 메서드 호출**한다 (`webviewPanel.setBlueprintState()`, `sidebarProvider.update()` 등).
 
-이유: 5개 도메인이라 작지만, 향후 V4 retrofit 모드 추가 시 parser 교체 쉬움. 이벤트 시그니처가 계약.
-
-이벤트 버스 = VS Code의 `EventEmitter` 활용. 별도 라이브러리 X.
-
-```typescript
-// types.ts
-export type EventBus = {
-  on(event: 'state-updated', handler: (s: BlueprintState) => void): void;
-  on(event: 'artifact-updated', handler: (a: Artifact) => void): void;
-  emit(event: string, payload: any): void;
-};
-```
+- file-watcher만 `EventEmitter`로 `file-changed`를 emit → extension이 구독 → 해당 .md 재파싱 → 각 도메인 setter 호출.
+- 초기 설계(ADR-004)는 전면 이벤트 버스였으나, V0~V3 규모(도메인 5개)엔 과해서 orchestrator 직접 호출로 단순화 (ADR-018). 계약은 setter 시그니처 + 공유 타입(`types.ts`).
 
 ## 단방향 데이터 흐름 (NON-GOALS 반영)
 
@@ -187,6 +178,7 @@ V0~V3은 `resume` 모드만 실제 동작. 나머지 두 모드는 안내 메시
 | 015 | 2026-06-09 | QA를 파이프라인 phase로 추가 (4.7, UX-REVIEW↔SHIP). SHIP 직전 최종 검증 게이트. ADR-012 동적 리스트라 state.md 한 줄로 반영. |
 | 016 | 2026-06-10 | BUILD TARGET 배지 (하이브리드: state.md 명시 + 자동감지). `build-target.ts` 순수 로직. |
 | 017 | 2026-06-12 | Guide 탭 추가 (Errors 오른쪽). 도구 문서(기능·단계별·변경이력) 내장 렌더 — .md→UI 원칙의 명시적 예외. 6페이지. |
+| 018 | 2026-06-12 | 통신: 전면 이벤트 버스(ADR-004) 대신 orchestrator 직접 메서드 호출 채택 — V0~V3 규모엔 이벤트 버스가 과함. file-watcher만 EventEmitter. 도메인 간 직접 import는 여전히 금지. (문서-구현 정합) |
 
 세부는 `docs/adr/ADR-{NNN}.md` 풀 파일 (006~008은 별도 파일 작성됨)
 

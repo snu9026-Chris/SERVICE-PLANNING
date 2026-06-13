@@ -161,6 +161,8 @@ export interface SidebarPayload {
   workspaceFolderPath: string;
   /** 해소된 산출물 타입 — 명시(state.buildTarget) 우선, 없으면 자동감지 (ADR-016). */
   buildTarget: BuildTarget | null;
+  /** 현재 진행 phase의 roadmap 미결(`- [ ]`) 항목 수. 0이면 배지 안 띄움. */
+  incompleteCount: number;
 }
 
 /**
@@ -175,6 +177,43 @@ export function getActivePhase(state: BlueprintState): Phase {
   const firstPending = state.phases.find(p => p.status === 'pending');
   if (firstPending) return firstPending;
   return state.phases[state.phases.length - 1];
+}
+
+/**
+ * "지금 작업할 phase" — in_progress 우선, 없으면 첫 pending. **둘 다 없으면 undefined**
+ * (전부 done). 마지막 done으로 fallback하지 않는다 — 미결 알림·current focus 등
+ * "끝났으면 비워야 하는" 자리에 쓴다. (getActivePhase는 항상 1개 반환과 대비)
+ */
+export function getActivePhaseOrNull(state: BlueprintState): Phase | undefined {
+  return (
+    state.phases.find(p => p.status === 'in_progress') ??
+    state.phases.find(p => p.status === 'pending')
+  );
+}
+
+/**
+ * roadmap.md에서 `## Phase {n} — {NAME}` 섹션의 미완(`- [ ]`) 항목 라벨 목록.
+ * 헤더의 phase 이름이 정확히 일치할 때만 (REVIEW가 UX-REVIEW에 오인 매칭 안 되게).
+ * Plan 탭 배너·사이드바 배지가 공유하는 순수 함수.
+ */
+export function incompletePhaseItems(roadmapMd: string | null, phaseName: string): string[] {
+  if (!roadmapMd) return [];
+  const lines = roadmapMd.split(/\r?\n/);
+  const headerRe = /^##\s+Phase\s+[\d.]+\s*[—–-]\s*([A-Z][A-Z-]*)/;
+  const items: string[] = [];
+  let inSection = false;
+  for (const line of lines) {
+    const h = line.match(headerRe);
+    if (h) {
+      inSection = h[1] === phaseName;
+      continue;
+    }
+    if (line.startsWith('## ')) inSection = false;
+    if (!inSection) continue;
+    const m = line.match(/^\s*-\s*\[ \]\s*(.+)$/);
+    if (m) items.push(m[1].trim());
+  }
+  return items;
 }
 
 /**

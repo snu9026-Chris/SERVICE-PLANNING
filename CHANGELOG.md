@@ -4,6 +4,33 @@
 
 형식: [Keep a Changelog](https://keepachangelog.com/) + [Semantic Versioning](https://semver.org/).
 
+## [0.14.0] — 2026-06-12
+
+### Changed (완결성 — 문서 동기화 + 품질/접근성)
+- **문서 드리프트 정리** — README(6탭·v0.13+·Preview=갤러리), CHANGELOG(0.12/0.13), ARCHITECTURE(폴더 레이아웃 실제화·`Phase` 동적 계약·통신방식)·**ADR-018**(이벤트버스→orchestrator 직접호출 정합), roadmap 재번호(INQUIRY P0 + state.md 일치).
+- **활성 phase 헬퍼 통일** — `getActivePhase`/`getActivePhaseOrNull` + 공유 `incompletePhaseItems`를 `types.ts`로 모아 plan/sidebar/extension가 재사용(중복 제거).
+
+### Added (접근성 · 사이드바)
+- **사이드바 phase 행 키보드 접근** — `role=button`+`tabindex`+Enter/Space 활성화, `:focus-visible` 아웃라인, hover/focus 시 클릭 chevron(affordance).
+- **사이드바 CURRENT FOCUS 미결 배지** — 현재 phase의 roadmap 미완 항목 수를 "미결 N" 배지로(Plan 탭 배너와 동일 신호).
+- 하네스 +4단언 → **175/175 PASS**.
+
+## [0.13.0] — 2026-06-12
+
+### Added (Guide 탭 · Plan 요약/미결 게이트 · DESIGN 3축)
+- **Guide 탭 신설** (ADR-017, Errors 오른쪽) — blueprint 기능·사용법·**INQUIRY→POST-SHIP 단계별 설명·변경이력**을 도구 내장 문서로. 파이프라인은 좌측 세로 박스 스테퍼(+소프트 게이트) / 우측 상세, 단계 클릭 시 상세 전환(webview JS). "단방향 .md→UI" 원칙의 명시적 예외(프로젝트 데이터가 아닌 도구 문서).
+- **Plan 탭 "지금 만드는 것" 칸** — PRODUCT.md One-liner(없으면 INQUIRY 문제)에서 추출해 *빌딩 중인 프로젝트*를 한 줄 표시. 기존 도구 설명용 메타 블록은 제거.
+- **미결 항목 게이트** — 현재 phase의 `roadmap.md` 체크리스트 `- [ ]` 미완 항목을 Plan 탭에 경고 배너로 집계. blueprint 스킬은 phase 전환 직전 미결 항목을 모아 "정하기/건너뛰기" 질의.
+- **DESIGN 단계 3축 상세화** (blueprint 스킬) — 기능·UX플로우·화면 3축으로 하위 항목 정의 → 집중 질의 → 플로우순 시안.
+- 하네스 153→**171 단언, 171/171 PASS**.
+
+## [0.12.0] — 2026-06-12
+
+### Added (Phase 0 INQUIRY 연동)
+- **Phase 0 INQUIRY 대시보드 연동** — Spec 탭에 `docs/INQUIRY.md` 폴더(PRODUCT 앞) 표시. phase 이름 `INQUIRY` 매핑 + 파일워처 배선(`spec.ts`/`panel.ts`/`extension.ts`). 사이드바 PHASES는 state.md 동적 파싱이라 추가 없이 P0 INQUIRY 렌더.
+- **Preview 라이브갱신 빈틈 수정** — `docs/design/` 하위 어느 폴더든(`screenshots/` 외 `redesign/` 등) `.html` 저장 시 갤러리 즉시 갱신.
+- blueprint 스킬 v2(별도 repo): Phase 0 INQUIRY 신설(리서치 기반 발견) + 전체 phase +1 재번호 + RESUME 자동 백필.
+
 ## [0.11.0] — 2026-06-11
 
 ### Added (BUILD TARGET 2축 — runtime/dist + Phase 0 인터뷰)

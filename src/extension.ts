@@ -28,12 +28,15 @@ import {
   ActiveFileInfo,
   BuildTarget,
   PackageJsonShape,
+  getActivePhaseOrNull,
+  incompletePhaseItems,
 } from './types';
 
 let watcher: FileWatcher | undefined;
 let sidebarProvider: SidebarViewProvider | undefined;
 let webviewPanel: BlueprintWebviewPanel | undefined;
 let currentState: BlueprintState | null = null;
+let currentRoadmap: string | null = null;
 let currentFolder: vscode.WorkspaceFolder | undefined;
 /** 자동감지된 산출물 타입 (state.md 명시 필드 없을 때 fallback, ADR-016) */
 let detectedBuildTarget: BuildTarget | null = null;
@@ -327,6 +330,7 @@ async function reloadState(): Promise<void> {
 async function reloadRoadmap(): Promise<void> {
   if (!currentFolder) return;
   const md = await readFileSafe(currentFolder, RELATIVE_PATHS.roadmap);
+  currentRoadmap = md; // 사이드바 미결 배지 계산용
   webviewPanel?.setRoadmap(md);
 }
 
@@ -404,6 +408,9 @@ function refreshSidebar(): void {
 }
 
 function buildSidebarPayload(folder: vscode.WorkspaceFolder): SidebarPayload {
+  // 현재 진행 phase의 roadmap 미결 항목 수 (전부 done이면 0)
+  const active = currentState ? getActivePhaseOrNull(currentState) : undefined;
+  const incompleteCount = active ? incompletePhaseItems(currentRoadmap, active.name).length : 0;
   return {
     state: currentState,
     recentChanges: watcher?.getRecentChanges() ?? [],
@@ -412,6 +419,7 @@ function buildSidebarPayload(folder: vscode.WorkspaceFolder): SidebarPayload {
     workspaceFolderPath: folder.uri.fsPath,
     // 명시(state.md) 우선, 없으면 자동감지 (ADR-016)
     buildTarget: currentState?.buildTarget ?? detectedBuildTarget,
+    incompleteCount,
   };
 }
 

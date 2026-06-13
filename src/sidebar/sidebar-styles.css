@@ -632,6 +632,36 @@ html, body {
 .phase-circle.in_progress { background: #007aff !important; box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.22) !important; }
 .hero-title { letter-spacing: -0.03em !important; }
 
+/* a11y: 키보드 포커스 표시 (phase row는 div+role=button) */
+.phase-row:focus-visible {
+  outline: 2px solid #007aff;
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+/* 클릭 affordance — hover/focus 시 우측 chevron 살짝 보임 */
+.phase-chevron {
+  font-size: 14px;
+  color: #c7c7cc;
+  opacity: 0;
+  transition: opacity 150ms ease;
+  flex-shrink: 0;
+}
+.phase-row:hover .phase-chevron,
+.phase-row:focus-visible .phase-chevron { opacity: 0.7; }
+
+/* CURRENT FOCUS 미결 항목 배지 */
+.focus-incomplete {
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #92400e;
+  background: #fff7ed;
+  border: 1px solid #fde0b8;
+  border-radius: 6px;
+  padding: 1px 6px;
+  vertical-align: middle;
+}
+
 /* progress: 더 얇고 차분하게 */
 .progress-bar { background: #e5e5ea !important; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04) !important; }
 .progress-meta { color: #8e8e93 !important; }
