@@ -25,7 +25,7 @@
 - confidence: locked
 
 ## Next action
-v0.15.0 설치+리로드 후 옛 프로젝트에서 "미반영" ghost phase 표시 확인 + /blueprint 백필 동작 확인. 백로그: mermaid 도식화, generic mode(V4), 1주 dogfooding.
+v0.16.0 설치+리로드 후 Preview 상세 뷰어 이전/다음 네비 확인 + 옛 프로젝트 ghost phase 확인. 백로그: mermaid 도식화, generic mode(V4), 1주 dogfooding.
 
 ## Decisions log
 - 2026-05-22~24: 초기 결정 — Antigravity extension, 단방향 .md→UI, AI 호출 X, V0 사이드바→V0+ webview, init/retrofit 모드. ADR-001~008. Phase 4 checkpoint 1회(checkpoint-2026-05-24.md).

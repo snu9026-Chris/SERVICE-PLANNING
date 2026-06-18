@@ -4,6 +4,12 @@
 
 형식: [Keep a Changelog](https://keepachangelog.com/) + [Semantic Versioning](https://semver.org/).
 
+## [0.16.0] — 2026-06-18
+
+### Added (Preview 상세 뷰어 이전/다음 네비)
+- **Preview 시안 상세에 이전/다음 화살표 + "n / 전체" 카운트** — "← 그리드로" 옆에 ←/→ 버튼으로 갤러리 순서(카테고리 그룹)대로 시안 넘기기. 양끝은 비활성. 기존 `data-preview-file` 클릭 핸들러 재사용(새 JS 없음).
+- 하네스 **184/184 PASS**. `.vscodeignore`에 `biz-plan-results/**` 추가(무관 폴더 vsix 누출 차단).
+
 ## [0.15.0] — 2026-06-12
 
 ### Added (옛 파이프라인 프로젝트의 전체 phase 가시화 — ADR-019)

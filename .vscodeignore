@@ -7,6 +7,7 @@ plans/**
 skills/**
 test/**
 .qa-tmp/**
+biz-plan-results/**
 SETUP.md
 DIGEST.md
 CLAUDE.md

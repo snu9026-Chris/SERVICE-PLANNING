@@ -123,6 +123,12 @@ try {
     { relativePath: 'docs/design/webview-plan.html', name: 'webview-plan.html', content: '<h1>plan</h1>' },
   ]), ['시안']);
   htmlSane(S, '풀뷰어', renderPreviewPage({ html: '<h1>preview</h1>', sourcePath: 'docs/design/x.html', pushedAt: new Date(0) }, []));
+  // 상세 뷰어 prev/next 네비 — 시안 2개 이상 + 현재 파일이 첫 번째
+  const navFiles = [
+    { relativePath: 'docs/design/a.html', name: 'a.html', content: '<i>a</i>' },
+    { relativePath: 'docs/design/b.html', name: 'b.html', content: '<i>b</i>' },
+  ];
+  htmlSane(S, '상세 prev/next', renderPreviewPage({ html: '<h1>a</h1>', sourcePath: 'docs/design/a.html', pushedAt: new Date(0) }, navFiles), ['preview-nav', '1 / 2']);
   // DESIGN.md 토큰 패널이 그리드에 함께 렌더되는지 (실제 DESIGN.md 사용)
   const designMd = readOpt('docs/DESIGN.md');
   const withTokens = renderPreviewPage({ html: null, sourcePath: null, pushedAt: null }, [], designMd);

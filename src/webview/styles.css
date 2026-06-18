@@ -1399,6 +1399,45 @@ li.spec-folder.open > .spec-folder-row > .spec-chevron {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
+/* 상세 뷰어 이전/다음 시안 네비 */
+.preview-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.preview-nav-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  color: #1d1d1f;
+  border: 1px solid rgba(60, 60, 67, 0.18);
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease;
+}
+.preview-nav-btn:hover:not(:disabled) {
+  background: #f2f2f7;
+  transform: translateY(-1px);
+}
+.preview-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.preview-nav-count {
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  color: #6e6e73;
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+  text-align: center;
+}
+
 .preview-detail-path {
   flex: 1;
   font-family: var(--font);

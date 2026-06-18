@@ -36,6 +36,7 @@ export function renderPreviewPage(
     return `
       <div class="preview-detail-bar">
         <button type="button" class="preview-back-btn" data-action="preview-back">← 그리드로</button>
+        ${renderDetailNav(designFiles, preview.sourcePath)}
         <div class="preview-detail-path">${sourceLabel}</div>
         <div class="preview-detail-time">${timeLabel}</div>
       </div>
@@ -86,6 +87,37 @@ export function renderPreviewPage(
     </div>
 
     ${groupsHtml}`;
+}
+
+/**
+ * 상세 뷰어 prev/next 네비 — 갤러리(카테고리 그룹) 순서대로 이전/다음 시안.
+ * 버튼은 기존 `data-preview-file` 클릭 핸들러를 재사용(서버 round-trip = 파일 로드).
+ * 시안이 2개 미만이거나 현재 파일을 못 찾으면 안 그림.
+ */
+function renderDetailNav(designFiles: PreviewDesignFile[], currentPath: string | null): string {
+  if (designFiles.length < 2 || !currentPath) return '';
+  const ordered = orderedFiles(designFiles);
+  const idx = ordered.findIndex(f => f.relativePath === currentPath);
+  if (idx === -1) return '';
+
+  const prev = ordered[idx - 1];
+  const next = ordered[idx + 1];
+  const btn = (f: PreviewDesignFile | undefined, arrow: string, aria: string) =>
+    f
+      ? `<button type="button" class="preview-nav-btn" data-preview-file="${escapeHtml(f.relativePath)}" title="${escapeHtml(f.name)}" aria-label="${aria}: ${escapeHtml(f.name)}">${arrow}</button>`
+      : `<button type="button" class="preview-nav-btn" disabled aria-label="${aria} 없음">${arrow}</button>`;
+
+  return `
+    <div class="preview-nav">
+      ${btn(prev, '←', '이전 시안')}
+      <span class="preview-nav-count">${idx + 1} / ${ordered.length}</span>
+      ${btn(next, '→', '다음 시안')}
+    </div>`;
+}
+
+/** 갤러리에 보이는 순서(카테고리 그룹 정렬)대로 평탄화한 파일 목록. */
+function orderedFiles(designFiles: PreviewDesignFile[]): PreviewDesignFile[] {
+  return groupByCategory(designFiles).flatMap(g => g.files);
 }
 
 /**

@@ -84,7 +84,7 @@ const REST_MD = `
 ## 탭별 안내
 - **Plan** — \`plans/roadmap.md\` 풀뷰 + "지금 만드는 것"(프로젝트 한 줄 설명) + 현재 phase 강조
 - **Spec** — INQUIRY / PRODUCT / DESIGN / ARCHITECTURE 문서를 폴더 탐색기처럼
-- **Preview** — \`docs/design/\` 디자인 시안 갤러리 + DESIGN.md 색·폰트 토큰 자동 추출
+- **Preview** — \`docs/design/\` 디자인 시안 갤러리(상세 뷰어 이전/다음 네비) + DESIGN.md 색·폰트 토큰 자동 추출
 - **QA** — \`docs/qa.report.md\` 점검 결과
 - **Errors** — \`docs/error.history.md\` 에러 이력
 - **Guide** — (이 화면) 기능 · 단계별 설명 · 변경이력
@@ -96,6 +96,7 @@ const REST_MD = `
 - **디자인 시안 보기**: \`docs/design/screenshots/<이름>.html\` 로 저장하면 Preview 탭에 자동 노출 (브라우저 안 띄움)
 
 ## 최신 업데이트
+- **v0.16.0** — Preview 상세 뷰어에 이전/다음 시안 화살표 네비 + n/전체 카운트
 - **v0.15.0** — 옛 파이프라인 프로젝트도 전체 phase 표시(사이드바 "미반영" ghost) + 스킬 백필 전체 캐노니컬 재조정
 - **v0.14.0** — 문서 동기화(README/ARCHITECTURE/roadmap) + 사이드바 접근성(키보드·focus·chevron) + 현재 phase 미결 배지
 - **v0.13.0** — Guide 탭 신설(단계별 스테퍼) + DESIGN 3축 상세화 + Plan "지금 만드는 것" 칸 + 미결 항목 게이트(전환 전 알림)
