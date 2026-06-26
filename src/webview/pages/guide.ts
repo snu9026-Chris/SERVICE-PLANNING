@@ -39,20 +39,21 @@ const PHASES: PhaseInfo[] = [
       '축1 기능 상세 — 트리거/입력/출력/상태로 분해',
       '축2 UX 플로우 — 진입·전환·분기·빈/에러/완료 상태',
       '축3 화면 기획 — 화면별 컴포넌트 → JBT 매핑',
-      '마무리: 확정 화면을 플로우 순서대로 시안 → Preview 탭에 흐름순 노출',
+      'UX Flow 인터뷰 — 진입→…→산출물 여정 + 단계별 기능을 UX-FLOW.md로 (UX Flow 탭)',
+      '마무리: 확정 화면을 플로우 순서대로 → UX Flow 탭에 흐름순(타임라인+단계별 큰 시안) 노출',
     ],
-    output: 'docs/DESIGN.md + docs/design/screenshots/*.html', skill: '/design-consultation' },
+    output: 'docs/DESIGN.md + docs/design/screenshots/*.html + docs/UX-FLOW.md', skill: '/design-consultation' },
   { k: '3', name: 'ARCHITECTURE', sub: '구조 잠금', soft: false,
     purpose: '코딩 전에 구조·경계 확정',
     lines: ['담는 것: 스택, 도메인 맵, inter-domain 규칙, 데이터 계약, 성능 예산'],
     output: 'docs/ARCHITECTURE.md + plans/*.md', skill: '/autoplan' },
   { k: '4', name: 'IMPLEMENT', sub: '구현', soft: false,
     purpose: 'ARCHITECTURE 체크리스트대로 코딩',
-    lines: ['진입 차단: PRODUCT/ARCHITECTURE 비면 코딩 거부 (hard gate)', '필요 시 /investigate, /codex'],
+    lines: ['진입 차단: PRODUCT/ARCHITECTURE 비면 코딩 거부 (hard gate)', '디자인 계약 못박기: 따르는 승인 시안 파일(docs/design/…html)을 명시 후 시작', '필요 시 /investigate, /codex'],
     output: '소스 코드', skill: '' },
   { k: '5', name: 'REVIEW', sub: '검토', soft: false,
     purpose: '머지 전 품질·구조 점검 + ADR 정리',
-    lines: [], output: 'docs/adr/, checkpoint 파일', skill: '/code-review + /retro' },
+    lines: ['디자인 대조 게이트: 구현 ↔ 승인 시안 HTML 나란히 비교 → 어긋난 점 리스트업 → 일치(또는 사용자 승인) 전 통과 금지'], output: 'docs/adr/, checkpoint 파일', skill: '/code-review + /retro' },
   { k: '5.5', name: 'UX-REVIEW', sub: '제품·UX 품질', soft: true,
     purpose: '사용자 관점 품질 채점',
     lines: [], output: 'docs/UX-QUALITY.md', skill: '' },
@@ -83,8 +84,9 @@ blueprint는 AI 코딩 워크플로를 **8단계 파이프라인**으로 안내�
 const REST_MD = `
 ## 탭별 안내
 - **Plan** — \`plans/roadmap.md\` 풀뷰 + "지금 만드는 것"(프로젝트 한 줄 설명) + 현재 phase 강조
-- **Spec** — INQUIRY / PRODUCT / DESIGN / ARCHITECTURE 문서를 폴더 탐색기처럼
-- **Preview** — \`docs/design/\` 디자인 시안 갤러리(상세 뷰어 이전/다음 네비) + DESIGN.md 색·폰트 토큰 자동 추출
+- **Spec** — INQUIRY / PRODUCT / DESIGN / ARCHITECTURE 문서를 폴더 탐색기처럼 + DESIGN.md 색·폰트 토큰 자동 추출
+- **UX Flow** — \`docs/UX-FLOW.md\` 한 파일로 ① 세로 흐름 타임라인(단계별 진입·화면·다음·상태) + ② 단계별 **큰 시안**(클릭하면 Preview에서 확대) + 미니 지도 — "이 프로그램으로 제품이 만들어지는 과정"을 한눈에
+- **Preview** — \`docs/design/\` **시안 갤러리 전용**(컴포넌트 디자인 ↔ 자유 실험 카드 그리드 + 이전/다음 네비). 카드 클릭 시 풀너비 iframe. (단계별 화면·기능 명세는 UX Flow 탭으로 이동 — ADR-022)
 - **QA** — \`docs/qa.report.md\` 점검 결과
 - **Errors** — \`docs/error.history.md\` 에러 이력
 - **Guide** — (이 화면) 기능 · 단계별 설명 · 변경이력
@@ -96,6 +98,9 @@ const REST_MD = `
 - **디자인 시안 보기**: \`docs/design/screenshots/<이름>.html\` 로 저장하면 Preview 탭에 자동 노출 (브라우저 안 띄움)
 
 ## 최신 업데이트
+- **v0.19.0** — UX Flow를 "제품이 만들어지는 과정"으로 재정의(단계별 묻기/정하기/채워짐/산출물) + ① 도식 ↔ ② 단계별 큰 시안 항상 같은 단계로 정렬
+- **v0.18.0** — UX Flow ↔ Preview 역할 분리(ADR-022): UX Flow에 흐름 타임라인+큰 시안 통합, Preview는 시안 갤러리 전용(2모드 토글 제거)
+- **v0.17.0** — UX Flow 탭 신설(여정 그래프) + Preview 2모드(자유 실험↔기능 명세) + \`docs/UX-FLOW.md\` 단일 출처 (ADR-020)
 - **v0.16.0** — Preview 상세 뷰어에 이전/다음 시안 화살표 네비 + n/전체 카운트
 - **v0.15.0** — 옛 파이프라인 프로젝트도 전체 phase 표시(사이드바 "미반영" ghost) + 스킬 백필 전체 캐노니컬 재조정
 - **v0.14.0** — 문서 동기화(README/ARCHITECTURE/roadmap) + 사이드바 접근성(키보드·focus·chevron) + 현재 phase 미결 배지

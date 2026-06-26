@@ -1,12 +1,14 @@
 /**
- * 가운데 Webview 패널 — 4페이지 멀티탭.
+ * 가운데 Webview 패널 — 7페이지 멀티탭.
  *
  * 탭:
  *  1. Plan    — plans/roadmap.md (state.md 현재 위치 강조)
  *  2. Spec    — PRODUCT/DESIGN/ARCHITECTURE.md 풀-너비
- *  3. Preview — Claude push한 HTML 1개
- *  4. QA      — docs/qa.report.md (전수 점검 체크리스트, 없으면 안내)
- *  5. Errors  — docs/error.history.md (없으면 생성 버튼)
+ *  3. UX Flow — docs/UX-FLOW.md 사용자 여정: ① 흐름 타임라인 + ② 단계별 큰 시안 (ADR-022)
+ *  4. Preview — 디자인 시안 갤러리 (ADR-022: 갤러리 전용)
+ *  5. QA      — docs/qa.report.md (전수 점검 체크리스트, 없으면 안내)
+ *  6. Errors  — docs/error.history.md (없으면 생성 버튼)
+ *  7. Guide   — 도구 내장 문서 (ADR-017)
  *
  * 데이터 흐름:
  *  extension.ts → setBlueprintState / setSpecArtifacts / setPreviewContent / setErrorHistory → refresh
@@ -19,10 +21,11 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { BlueprintState } from '../types';
+import { BlueprintState, UxFlow } from '../types';
 import { renderPlanPage } from './pages/plan';
 import { renderSpecPage, SpecArtifacts, SpecActiveSelection, SpecFolderKey } from './pages/spec';
 import { renderPreviewPage, PreviewContent, PreviewDesignFile } from './pages/preview';
+import { renderFlowPage } from './pages/flow';
 import { renderQaPage } from './pages/qa';
 import { renderErrorsPage } from './pages/errors';
 import { renderGuidePage } from './pages/guide';
@@ -31,18 +34,20 @@ import { makeNonce, escapeHtml } from './shared';
 const VIEW_TYPE = 'blueprintDashboard';
 const PANEL_TITLE = 'Blueprint Dashboard';
 
-export type TabId = 'plan' | 'spec' | 'preview' | 'qa' | 'errors' | 'guide';
+export type TabId = 'plan' | 'spec' | 'flow' | 'preview' | 'qa' | 'errors' | 'guide';
 
 const TAB_LABELS: Record<TabId, string> = {
   plan: 'Plan',
   spec: 'Spec',
+  flow: 'UX Flow',
   preview: 'Preview',
   qa: 'QA',
   errors: 'Errors',
   guide: 'Guide',
 };
 
-const TAB_ORDER: TabId[] = ['plan', 'spec', 'preview', 'qa', 'errors', 'guide'];
+// UX Flow는 Spec과 Preview 사이 (여정·화면 → 시안 갤러리, ADR-020·022)
+const TAB_ORDER: TabId[] = ['plan', 'spec', 'flow', 'preview', 'qa', 'errors', 'guide'];
 
 export interface BlueprintWebviewPanelCallbacks {
   /** Errors 페이지에서 "에러 히스토리 시작" 버튼 클릭 시 호출 */
@@ -63,8 +68,10 @@ export class BlueprintWebviewPanel {
   private specActive?: SpecActiveSelection;
   private preview: PreviewContent = { html: null, sourcePath: null, pushedAt: null };
   private designFiles: PreviewDesignFile[] = [];
+  private uxFlow: UxFlow | null = null;
   private qaReportMd: string | null = null;
   private errorHistoryMd: string | null = null;
+  private errorAutoMd: string | null = null;
 
   private disposables: vscode.Disposable[] = [];
 
@@ -138,7 +145,14 @@ export class BlueprintWebviewPanel {
 
   setDesignFiles(files: PreviewDesignFile[]): void {
     this.designFiles = files;
-    if (this.panel && this.activeTab === 'preview') this.refresh();
+    // Preview 갤러리 + UX Flow 탭 ② 단계별 큰 시안이 designFiles를 씀 (ADR-022)
+    if (this.panel && (this.activeTab === 'preview' || this.activeTab === 'flow')) this.refresh();
+  }
+
+  /** docs/UX-FLOW.md 파싱 결과 (ADR-020, ADR-022). UX Flow 탭이 사용. */
+  setUxFlow(flow: UxFlow | null): void {
+    this.uxFlow = flow;
+    if (this.panel && this.activeTab === 'flow') this.refresh();
   }
 
   setQaReport(md: string | null): void {
@@ -148,6 +162,12 @@ export class BlueprintWebviewPanel {
 
   setErrorHistory(md: string | null): void {
     this.errorHistoryMd = md;
+    if (this.panel && this.activeTab === 'errors') this.refresh();
+  }
+
+  /** 자동 수집된 에러(error.auto.md, ADR-021). Errors 탭 상단 '자동' 섹션. */
+  setErrorAuto(md: string | null): void {
+    this.errorAutoMd = md;
     if (this.panel && this.activeTab === 'errors') this.refresh();
   }
 
@@ -389,12 +409,14 @@ export class BlueprintWebviewPanel {
         return renderPlanPage(this.currentState, this.roadmapMd, this.specArtifacts.product, this.specArtifacts.inquiry);
       case 'spec':
         return renderSpecPage(this.specArtifacts, this.specActive, this.specFocus);
+      case 'flow':
+        return renderFlowPage(this.uxFlow, this.designFiles);
       case 'preview':
-        return renderPreviewPage(this.preview, this.designFiles, this.specArtifacts.design);
+        return renderPreviewPage(this.preview, this.designFiles);
       case 'qa':
         return renderQaPage(this.qaReportMd);
       case 'errors':
-        return renderErrorsPage(this.errorHistoryMd);
+        return renderErrorsPage(this.errorHistoryMd, this.errorAutoMd);
       case 'guide':
         return renderGuidePage();
     }

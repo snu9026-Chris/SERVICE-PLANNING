@@ -222,10 +222,10 @@ state.md 직접 편집:
 |---|---|---|---|
 | 0 | `/office-hours` + **TARGET 서브-인터뷰** | `docs/PRODUCT.md` (+ `## Build target`) | — |
 | 0.5 | (직접 — 아래 FEASIBILITY 절차) | `docs/FEASIBILITY.md` | PRODUCT.md non-empty |
-| 1 | `/design-consultation` + **UI Composition 인터뷰** | `docs/DESIGN.md` (UI Composition Decisions 섹션 채워짐) | PRODUCT.md non-empty, **FEASIBILITY.md soft-gate (비어있으면 경고만)** |
+| 1 | `/design-consultation` + **UI Composition 인터뷰** + **UX Flow 인터뷰** | `docs/DESIGN.md` (UI Composition Decisions) + `docs/UX-FLOW.md` (여정·기능, ADR-020) | PRODUCT.md non-empty, **FEASIBILITY.md soft-gate (비어있으면 경고만)** |
 | 2 | `/autoplan` (CEO+Design+Eng 묶음) | `docs/ARCHITECTURE.md` + `plans/*.md` | PRODUCT.md non-empty, **DESIGN.md UI Composition 비어있지 않음** |
-| 3 | (코딩) — 필요시 `/investigate`, `/codex` | source code | **PRODUCT + ARCHITECTURE non-empty + UI Composition non-empty** |
-| 4 | `/code-review` + `/retro` | `docs/adr/`, checkpoint 파일 | — |
+| 3 | (코딩) — 필요시 `/investigate`, `/codex`. **시작 시 따르는 승인 시안 파일(`docs/design/…html`)을 디자인 계약으로 명시** | source code | **PRODUCT + ARCHITECTURE non-empty + UI Composition non-empty** |
+| 4 | `/code-review` + `/retro` + **디자인 대조 게이트** (구현↔승인 시안 HTML 나란히 비교, 어긋난 점 리스트업, 일치/승인 전 통과 금지) | `docs/adr/`, checkpoint 파일 | — |
 | 4.5 | (직접 — 아래 UX-REVIEW 절차) + `/design-review` 위임 | `docs/UX-QUALITY.md` | IMPLEMENT 완료 |
 | 5 | `/qa` → `/review` → `/ship` | merged PR | tests pass, **UX-QUALITY.md soft-gate (비어있으면 경고만)** |
 | 6 | `/land-and-deploy` → `/document-release` → `/retro` | deployed app | shipped |
@@ -329,6 +329,37 @@ Phase 1에서 디자인 시스템(색/폰트/스페이싱) 정한 후, 각 메�
 5. DESIGN.md의 `## UI Composition Decisions` 표에 결정 박음
 
 **금지**: 데이터 구조(state.md 섹션 등)를 그대로 UI 컴포넌트로 1:1 매핑. JBT 매핑 없는 컴포넌트는 박지 않는다.
+
+### UX Flow 인터뷰 — DESIGN 단계의 sub-step (사용자 여정 정의, ADR-020)
+
+화면 시안을 만든 뒤(또는 만들면서), 이 제품을 쓰는 사람의 *여정*을 정의해 `docs/UX-FLOW.md`로 박는다.
+대시보드의 **UX Flow 탭**(여정 그래프)과 **Preview 기능 명세**가 이 파일 하나에서 그려지므로,
+화면과 스킬이 같은 형식을 공유한다(따로 놀지 않음).
+
+목적: "처음 어디로 들어가서 → 순서대로 무엇을 하고 → 최종 산출물이 나오기까지"를 단계로 쪼개고,
+각 단계에 붙는 기능을 매칭. 여정은 제품마다 다르므로 고정하지 않고 매번 인터뷰로 만든다.
+
+절차 (AskUserQuestion, 한 번에 하나):
+1. `docs/PRODUCT.md` JBT + 방금 만든 화면 시안 목록을 읽는다.
+2. 진입점부터: "이 제품을 처음 쓰는 사람은 어디로 들어오나요? (랜딩/로그인/바로 작업…)"
+3. 순서대로 한 단계씩: "그 다음엔 무엇을 하나요? → 그 다음은?" — **최종 산출물이 나오는 단계까지**.
+4. 각 단계마다 ① 한 줄 요약 ② 그 단계 화면 시안 파일(있으면) ③ 기능 2~4개(이름·설명·상태).
+5. `docs/UX-FLOW.md`에 아래 형식으로 박는다.
+
+형식 (파서 계약 — 어기면 대시보드가 못 읽음):
+```markdown
+# UX Flow — 제품명
+> 한 줄 소개
+## 1. 단계명
+> 단계 한 줄 요약
+- 시안: webview-foo.html        # 그 단계 화면 시안 (docs/design/screenshots/)
+### 기능
+- 기능이름 — 한 줄 설명 [핵심|예정|완료]
+```
+규칙:
+- `## N. 단계명`이 여정 노드. **진입 → … → 산출물** 순서.
+- `- 시안:` 은 `docs/design/screenshots/`의 파일명(또는 상대경로). 매칭되면 기능 명세에 썸네일로 뜸.
+- 기능 상태 칩: 핵심 / 예정 / 완료 (생략 가능). 구분자는 ` — `(em대시) 권장.
 
 각 Phase 실행 절차:
 1. Hard gate 검사 (실패 시 정지)

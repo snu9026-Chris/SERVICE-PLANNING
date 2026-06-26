@@ -33,7 +33,7 @@ V0 검증 질문: "사이드바에 phase 진행도가 영구 떠 있는 것만�
 
 ## NON-GOALS
 - **AI 호출을 직접 하지 않는다.** Claude Agent SDK 호출 없음. 모든 AI 동작은 사용자가 채팅에서 `/blueprint`, `/blueprint check` 슬래시 명령으로 트리거. → biz-plan-extension 패턴 *채용하지 않음*.
-- **/blueprint 자체를 대체하지 않는다.** 시각화·알림 레이어만. 모든 state 변경의 진실 원본은 `.blueprint/state.md` (단방향: 파일 → UI).
+- **/blueprint 자체를 대체하지 않는다.** 시각화·알림 레이어만. 모든 state 변경의 진실 원본은 `.blueprint/state.md` (단방향: 파일 → UI). *예외(ADR-021)*: 확장이 진단/Task 실패에서 파생된 텔레메트리를 `docs/error.auto.md` 한 파일에만 자동 기록 — 상태가 아닌 파생 로그이며 state·기획 산출물은 불변.
 - **임의 마크다운 generic 프리뷰 안 함.** `.blueprint/state.md` 가 없는 워크스페이스에선 "감지 안 됨" 안내만. (V4 이후 별도 제품으로 분리 검토 — 본 product 정체성 분산 방지)
 - **사용자 모드 선택 prompt 없음.** state.md 유무 + 코드 파일 유무로 자동 감지. 인지부하 ↓
 - **Antigravity 외 IDE 미지원.** VS Code 본가, Cursor, JetBrains 안 함.

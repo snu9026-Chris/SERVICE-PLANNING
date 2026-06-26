@@ -121,6 +121,7 @@ export class FileWatcher extends EventEmitter {
     if (r.includes('/.git/')) return true;
     if (r.endsWith('.vsix')) return true;
     if (r === 'package-lock.json') return true;
+    if (r === 'docs/error.auto.md') return true; // 자동 수집 산출물 — 사용자 작업 아님 (ADR-021)
     return false;
   }
 

@@ -121,12 +121,72 @@ export interface Artifact {
 }
 
 /**
+ * UX Flow (사용자 여정) — docs/UX-FLOW.md 파싱 결과 (ADR-020, ADR-022).
+ * UX Flow 탭의 ① 흐름 타임라인과 ② 단계별 큰 시안이 이 *한 객체*를 공유 → 항상 일치.
+ */
+export type UxFeatureStatus = 'core' | 'todo' | 'done';
+
+export interface UxFlowFeature {
+  /** 기능 이름 (구분자 앞) */
+  name: string;
+  /** 한 줄 설명 (구분자 뒤, 없으면 빈 문자열) */
+  desc: string;
+  /** 상태 칩 — [핵심]/[예정]/[완료]. 없으면 undefined. */
+  status?: UxFeatureStatus;
+}
+
+export interface UxFlowStep {
+  /** 순번 — `## N.`의 N, 없으면 등장순(1-based) */
+  index: number;
+  /** 단계 이름 (`## N. 이름`의 이름 부분) */
+  label: string;
+  /** 첫 `>` 블록인용 = 한 줄 요약 (선택) */
+  summary?: string;
+  /** `- 시안: X` = 이 단계 화면 시안 파일명/상대경로 (선택). UX Flow 탭 큰 시안 매칭용. */
+  designRef?: string;
+  /** ① 플로우 상세 (ADR-022) — `- 묻기: …` Claude가 무엇을 물어보나 */
+  ask?: string;
+  /** ① 플로우 상세 — `- 정하기: …` 같이 무엇을 정하나 */
+  decide?: string;
+  /** ① 플로우 상세 — `- 채워짐: …` 대시보드 어디가 채워지나 */
+  fills?: string;
+  /** ① 플로우 상세 — `- 산출물: …` 어떤 파일/결과가 나오나 */
+  output?: string;
+  features: UxFlowFeature[];
+}
+
+export interface UxFlow {
+  /** 첫 `#` 헤딩 (예: 'UX Flow — 제품명') */
+  title: string;
+  /** 제목 직후 첫 `>` 인용 (선택) */
+  intro?: string;
+  steps: UxFlowStep[];
+}
+
+/**
  * 파일 변경 이벤트 — file-watcher가 emit하는 payload
  */
 export interface FileChangeEvent {
   /** 절대 경로 */
   path: string;
   kind: 'change' | 'create' | 'delete';
+}
+
+/**
+ * 자동 수집된 에러 1건 (ADR-021). diagnostics 도메인이 emit, extension이 error.auto.md로 직렬화.
+ * Diagnostics(컴파일/린트 빨간줄) 또는 Task 실패(exit≠0)에서 파생.
+ */
+export interface AutoErrorEntry {
+  /** 출처 종류 — 'diagnostic'=에디터 진단, 'task'=빌드/테스트 태스크 실패 */
+  kind: 'diagnostic' | 'task';
+  /** 워크스페이스 상대 경로 (diagnostic). task는 null */
+  file: string | null;
+  /** 1-based 줄 번호 (diagnostic). 없으면 null */
+  line: number | null;
+  /** 에러 메시지 (task는 "태스크명 (exit N)") */
+  message: string;
+  /** 진단 source('ts','eslint'…) 또는 태스크명. 없으면 null */
+  source: string | null;
 }
 
 /**

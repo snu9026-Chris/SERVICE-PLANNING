@@ -25,7 +25,7 @@
 - confidence: locked
 
 ## Next action
-v0.16.0 설치+리로드 후 Preview 상세 뷰어 이전/다음 네비 확인 + 옛 프로젝트 ghost phase 확인. 백로그: mermaid 도식화, generic mode(V4), 1주 dogfooding.
+v0.19.1 설치+리로드 후 UX Flow ①도식·②큰시안 도그푸딩 + Preview 2그룹(컴포넌트/자유실험) 확인. code-review 7건 + UX-FLOW 매칭(A·B) 반영 완료. 백로그: mermaid 도식화, generic mode(V4), 1주 dogfooding.
 
 ## Decisions log
 - 2026-05-22~24: 초기 결정 — Antigravity extension, 단방향 .md→UI, AI 호출 X, V0 사이드바→V0+ webview, init/retrofit 모드. ADR-001~008. Phase 4 checkpoint 1회(checkpoint-2026-05-24.md).
@@ -34,6 +34,8 @@ v0.16.0 설치+리로드 후 Preview 상세 뷰어 이전/다음 네비 확인 +
 - 2026-06-10: Phase 0.5 FEASIBILITY 사후검증(JTBD ✅3/⚠️2/❌0) → 명세-구현 간극 2건 발견, 결정 A로 둘 다 구현 — JTBD3 활동바 배지(`computeTriggerBadge`), JTBD5 디자인토큰 패널(`extractDesignTokens`). 둘 다 순수함수+하네스. FEASIBILITY 5/5 ✅. docs/FEASIBILITY.md. (v0.9.7→0.9.9)
 - 2026-06-10: ADR-016 BUILD TARGET — Hero phase 위 산출물 타입 배지(하이브리드: state.md 명시 우선 + package.json/tauri/index.html 자동감지, `build-target.ts` 순수). + blueprint 스킬 Phase 0 TARGET 인터뷰 신설(2축 type+run/dist, state.md/PRODUCT 템플릿 슬롯). 하네스 142/142. (v0.10.0→0.11.0)
 - 2026-06-12: Phase 0 INQUIRY 신설 — blueprint 스킬 v2(INQUIRY 절차+RESUME 자동백필, 전체 phase +1, 별도 public repo) + 대시보드 연동(spec/panel/extension)·docs/design 라이브갱신. ADR-017 Guide 탭(Errors 오른쪽, 기능·단계별·변경이력 내장, .md→UI 예외). + 완결성 정리(문서 동기화·ADR-018·헬퍼·a11y/미결 배지) + ADR-019 옛 파이프라인 ghost phase·스킬 전체 캐노니컬 백필. 하네스 178/178. (v0.12.0→0.15.0)
+- 2026-06-23: ADR-020 UX Flow 탭(Spec↔Preview) + Preview 2모드(자유 실험↔기능 명세). 단일 출처 `docs/UX-FLOW.md`(parser ux-flow.ts) → 여정 그래프·기능명세 공유. blueprint DESIGN에 UX Flow 인터뷰. + 디자인 계약 게이트(REVIEW 시안 대조, CLAUDE.md). 페이지 8개. (→v0.17.0)
+- 2026-06-26: ADR-021 에러 자동수집(diagnostics 도메인), ADR-022 UX Flow↔Preview 역할분리(타임라인+큰시안 통합/Preview 갤러리 전용). Guide 탭 최신화 + code-review 7건 수정 + UX-FLOW 매칭 A·B 정리. 하네스 231/231. (v0.18→0.19.1)
 
 ## Counters
 - ships_since_checkpoint: 1

@@ -44,10 +44,16 @@ DDD 정신 그대로. 작은 extension이라 도메인 5개로 충분.
 - **Subscribes**: `artifact-updated`, `sidebar-click`
 
 ### 5. extension (orchestrator)
-- **Owns**: activation, 이벤트 버스, 다른 도메인 wire-up, 모드 감지(init/resume/retrofit)
+- **Owns**: activation, 이벤트 버스, 다른 도메인 wire-up, 모드 감지(init/resume/retrofit), 파생 텔레메트리 1파일 쓰기(`docs/error.auto.md` — ADR-021)
 - **NOT owns**: 비즈니스 로직 (다른 도메인에 위임)
 - **Emits**: (none)
 - **Subscribes**: 모든 이벤트 (라우팅 책임)
+
+### 6. diagnostics (collector, ADR-021)
+- **Owns**: VS Code `onDidChangeDiagnostics` + `tasks.onDidEndTaskProcess` 리스너, 디바운스·중복제거, 에러 스냅샷 구조화. 순수 포맷터 `formatAutoErrorsMarkdown`.
+- **NOT owns**: fs IO(파일 쓰기는 extension), 렌더링, 파싱
+- **Emits**: `errors-updated` (구조화된 `AutoErrorEntry[]`)
+- **Subscribes**: (none) — extension activate 시 VS Code 리스너 등록
 
 ## Folder layout
 
@@ -56,15 +62,18 @@ DDD 정신 그대로. 작은 extension이라 도메인 5개로 충분.
 ├── src/
 │   ├── parser/
 │   │   ├── state.ts          ← .blueprint/state.md 파서
+│   │   ├── ux-flow.ts        ← docs/UX-FLOW.md 파서 (순수, ADR-020)
 │   │   └── build-target.ts   ← BUILD TARGET 감지/명시 (순수, ADR-016)
 │   ├── file-watcher/
 │   │   └── watcher.ts        ← FS watch + debounce + EventEmitter
+│   ├── diagnostics/
+│   │   └── collector.ts      ← Diagnostics + Task 리스너 + 순수 포맷터 (ADR-021)
 │   ├── sidebar/
 │   │   ├── sidebar-view-provider.ts  ← Webview view 제공자 + 활동바 배지
 │   │   └── sidebar-styles.css
 │   ├── webview/
 │   │   ├── panel.ts          ← WebviewPanel 생명주기 + 탭 라우팅
-│   │   ├── pages/            ← plan / spec / preview / qa / errors / guide
+│   │   ├── pages/            ← plan / spec / flow / preview / qa / errors / guide
 │   │   ├── design-tokens.ts  ← DESIGN.md 색/폰트 추출 (순수)
 │   │   ├── shared.ts         ← markdown 렌더 · escape · nonce
 │   │   └── styles.css
@@ -95,6 +104,7 @@ DDD 정신 그대로. 작은 extension이라 도메인 5개로 충분.
 | `Artifact` | parser | `{ path, title, sections: Section[], html: string }` |
 | `DesignToken` | parser | `{ kind: 'color' \| 'font' \| 'spacing', value, description }` |
 | `BuildTarget` | parser | `{ type, label, icon, stack?, source: 'explicit' \| 'detected' }` (ADR-016) |
+| `UxFlow` | parser | `{ title, intro?, steps: { index, label, summary?, designRef?, features[] }[] }` (ADR-020) — Flow 탭 + Preview 기능명세 공유 |
 
 모든 entity는 *immutable*. parser가 새 버전을 emit하면 sidebar/webview가 통째로 교체.
 
@@ -122,9 +132,13 @@ state-updated / artifact-updated event
    └─ webview 내 버튼 클릭 → command (e.g., "/blueprint check" 슬래시 명령 호출만)
 
 ❌ extension 절대 안 함:
-   - .md 파일에 직접 write
+   - 상태/기획 산출물(.blueprint/state.md, PRODUCT/DESIGN/ARCHITECTURE/UX-FLOW.md)에 write
    - AI API 호출
    - 사용자 코드 수정
+
+⚠️ 단 하나의 예외 (ADR-021):
+   - docs/error.auto.md — 진단/Task 실패에서 파생된 읽기전용 텔레메트리만 자동 기록.
+     상태가 아닌 파생 로그(언제든 삭제·재생성 가능, 진실 원본 아님).
 ```
 
 ## Performance budget (사용자 우려 반영)
@@ -180,6 +194,8 @@ V0~V3은 `resume` 모드만 실제 동작. 나머지 두 모드는 안내 메시
 | 017 | 2026-06-12 | Guide 탭 추가 (Errors 오른쪽). 도구 문서(기능·단계별·변경이력) 내장 렌더 — .md→UI 원칙의 명시적 예외. 6페이지. |
 | 018 | 2026-06-12 | 통신: 전면 이벤트 버스(ADR-004) 대신 orchestrator 직접 메서드 호출 채택 — V0~V3 규모엔 이벤트 버스가 과함. file-watcher만 EventEmitter. 도메인 간 직접 import는 여전히 금지. (문서-구현 정합) |
 | 019 | 2026-06-12 | 캐노니컬 phase ghost — 옛 파이프라인 프로젝트에 빠진 표준 phase를 사이드바 "미반영" ghost로 표시(표시 전용) + `/blueprint` 백필을 전체 캐노니컬 재조정으로 확장. `CANONICAL_PHASES` 상수는 ADR-012의 부분 예외. |
+| 020 | 2026-06-23 | UX Flow 탭(Spec↔Preview 사이) + Preview 2모드(자유 실험↔기능 명세) 신설. 단일 출처 `docs/UX-FLOW.md`(parser `ux-flow.ts`)를 Flow 그래프와 기능명세가 공유 → 항상 일치. blueprint DESIGN 단계에 UX Flow 인터뷰 추가. 페이지 8개. |
+| 021 | 2026-06-23 | 자동 에러 수집 — `diagnostics` 도메인 신설(Diagnostics + Task 실패 리스너). 확장의 파생 쓰기 예외를 `docs/error.auto.md` 1파일로 한정(상태·기획 산출물은 불변). Errors 탭 자동/수동 2섹션. 폴더 무관(onStartupFinished)으로 확장 개발/생성앱 두 맥락 커버. 런타임 에러는 범위 밖. |
 
 세부는 `docs/adr/ADR-{NNN}.md` 풀 파일 (006~008은 별도 파일 작성됨)
 

@@ -1,13 +1,13 @@
 /**
- * Preview 페이지 — 큰 아이콘 그리드 (Windows 탐색기 풍).
+ * Preview 페이지 — 디자인 시안 갤러리 (ADR-022: 갤러리 전용).
  *
- * - 카드 클릭: 풀-너비 viewer
- * - "← 그리드로" 버튼으로 그리드로 복귀
- * - 채팅 명령 push도 그대로 (Spec 페이지의 디자인 시안 명령)
+ * - docs/design/ 의 .html 시안을 카테고리별 카드 그리드로.
+ * - 카드 클릭: 풀-너비 viewer (iframe). "← 그리드로"로 복귀. 이전/다음 네비.
+ * - 채팅 명령 push도 그대로 (Spec 페이지의 디자인 시안 명령).
+ * (단계별 화면·기능 명세는 UX Flow 탭으로 이동 — ADR-022)
  */
 
 import { escapeHtml } from '../shared';
-import { extractDesignTokens, DesignTokens } from '../design-tokens';
 
 export interface PreviewContent {
   html: string | null;
@@ -18,16 +18,15 @@ export interface PreviewContent {
 export interface PreviewDesignFile {
   relativePath: string;
   name: string;
-  /** 카드 썸네일 렌더용 (iframe srcdoc) */
+  /** 카드 썸네일/시안 렌더용 (iframe srcdoc) */
   content?: string;
 }
 
 export function renderPreviewPage(
   preview: PreviewContent,
   designFiles: PreviewDesignFile[] = [],
-  designMarkdown: string | null = null,
 ): string {
-  // 1) 활성 콘텐츠 있으면 — 풀-너비 viewer + 상단 그리드로 돌아가기 버튼
+  // 1) 활성 콘텐츠 있으면 — 풀-너비 viewer (push 또는 카드/시안 클릭)
   if (preview.html) {
     const escapedHtml = escapeHtml(preview.html);
     const sourceLabel = escapeHtml(preview.sourcePath ?? '(unknown)');
@@ -45,14 +44,11 @@ export function renderPreviewPage(
       </div>`;
   }
 
-  // 2) 그리드 — 상단에 DESIGN TOKENS(DESIGN.md 자동 추출) + 아래 시안 갤러리
-  const tokensHtml = renderDesignTokens(extractDesignTokens(designMarkdown));
-
+  // 2) 시안 갤러리
   if (designFiles.length === 0) {
     return `
-      ${tokensHtml}
       <div class="page-hero compact">
-        <div class="page-eyebrow">PREVIEW · 디자인 시안</div>
+        <div class="page-eyebrow">PREVIEW · 시안 갤러리</div>
         <h1 class="page-title">시안이 없어요</h1>
         <p class="page-subtitle">
           <code>docs/design/</code> 폴더에 <code>.html</code> 파일이 없습니다.<br/>
@@ -64,7 +60,9 @@ export function renderPreviewPage(
   // 카테고리별로 그룹화 (파일명 prefix 기반 자동 분류)
   const grouped = groupByCategory(designFiles);
   const groupsHtml = grouped.map(group => {
-    const tiles = group.files.map(f => renderTile(f)).join('');
+    const inner = group.files.length
+      ? `<div class="preview-grid">${group.files.map(f => renderTile(f)).join('')}</div>`
+      : `<div class="preview-category-empty">${escapeHtml(emptyHint(group.key))}</div>`;
     return `
     <section class="preview-category">
       <div class="preview-category-header">
@@ -72,17 +70,16 @@ export function renderPreviewPage(
         <span class="preview-category-name">${escapeHtml(group.name)}</span>
         <span class="preview-category-count">${group.files.length}</span>
       </div>
-      <div class="preview-grid">${tiles}</div>
+      ${inner}
     </section>`;
   }).join('');
 
   return `
-    ${tokensHtml}
     <div class="page-hero compact">
-      <div class="page-eyebrow">PREVIEW · 디자인 시안</div>
+      <div class="page-eyebrow">PREVIEW · 시안 갤러리</div>
       <h1 class="page-title">${designFiles.length}개 시안</h1>
       <p class="page-subtitle">
-        <code>docs/design/</code> 폴더 자동 listing · 카테고리별 분리 · 큰 카드 클릭으로 확대
+        이것저것 띄워보는 곳 · <code>docs/design/</code> 자동 listing · 카드 클릭으로 확대
       </p>
     </div>
 
@@ -120,44 +117,6 @@ function orderedFiles(designFiles: PreviewDesignFile[]): PreviewDesignFile[] {
   return groupByCategory(designFiles).flatMap(g => g.files);
 }
 
-/**
- * DESIGN TOKENS 패널 — DESIGN.md에서 자동 추출한 색상 스와치 + 폰트 샘플 (JTBD5).
- * 토큰이 하나도 없으면 빈 문자열(섹션 자체를 그리지 않음).
- */
-function renderDesignTokens(tokens: DesignTokens): string {
-  if (tokens.colors.length === 0 && tokens.fonts.length === 0) return '';
-
-  const swatches = tokens.colors.map(c => {
-    const tip = c.label ? `${c.label} · ${c.value}` : c.value;
-    return `
-      <div class="token-swatch" title="${escapeHtml(tip)}">
-        <span class="token-chip"><span class="token-chip-fill" style="background:${escapeHtml(c.value)}"></span></span>
-        <span class="token-meta">
-          <span class="token-value">${escapeHtml(c.value)}</span>
-          ${c.label ? `<span class="token-label">${escapeHtml(c.label)}</span>` : ''}
-        </span>
-      </div>`;
-  }).join('');
-
-  const fonts = tokens.fonts.map(f => `
-    <div class="token-font">
-      <span class="token-font-sample" style="font-family:'${escapeHtml(f)}', 'Pretendard Variable', sans-serif">Aa 가나다 123</span>
-      <span class="token-font-name">${escapeHtml(f)}</span>
-    </div>`).join('');
-
-  return `
-    <section class="preview-tokens">
-      <div class="preview-category-header">
-        <span class="preview-category-icon">🎨</span>
-        <span class="preview-category-name">DESIGN TOKENS</span>
-        <span class="preview-category-count">${tokens.colors.length + tokens.fonts.length}</span>
-      </div>
-      <div class="token-subtitle">DESIGN.md에서 자동 추출 — 색상 ${tokens.colors.length} · 폰트 ${tokens.fonts.length}</div>
-      ${tokens.colors.length ? `<div class="token-swatches">${swatches}</div>` : ''}
-      ${tokens.fonts.length ? `<div class="token-fonts">${fonts}</div>` : ''}
-    </section>`;
-}
-
 function renderTile(f: PreviewDesignFile): string {
   const hue = simpleHash(f.relativePath) % 360;
   const accent = `hsl(${hue}, 70%, 75%)`;
@@ -189,21 +148,18 @@ interface PreviewGroup {
 }
 
 /**
- * 파일명 prefix 기반 자동 카테고리 분류.
+ * 폴더 경로 기반 자동 카테고리 분류 (두 그룹).
  *
- * - sidebar*.html              → 사이드바
- * - webview-plan*.html         → Plan 페이지
- * - webview-spec-*.html        → Spec 페이지
- * - webview-preview*.html      → Preview 페이지
- * - webview-errors*.html       → Errors 페이지
- * - *-mockup-*.html            → 검증 단계 mockup
- * - 그 외                       → 기타
+ * - docs/design/screenshots/*  → 📐 디자인 시안 (구현 계약 = source of truth)
+ * - 그 외 (sandbox/ 등)         → 🧪 자유 실험 (이것저것 띄워보는 곳)
  */
 function groupByCategory(files: PreviewDesignFile[]): PreviewGroup[] {
   const groups = new Map<string, PreviewGroup>();
+  // 두 그룹은 파일이 없어도 항상 보이게 미리 만들어 둠 (자유 실험 비어도 헤더 노출)
+  for (const cat of [DESIGN_CAT, SANDBOX_CAT]) groups.set(cat.key, { ...cat, files: [] });
 
   for (const f of files) {
-    const cat = categorizeFile(f.name);
+    const cat = categorizeFile(f.relativePath);
     if (!groups.has(cat.key)) {
       groups.set(cat.key, { ...cat, files: [] });
     }
@@ -217,31 +173,18 @@ function groupByCategory(files: PreviewDesignFile[]): PreviewGroup[] {
   });
 }
 
-function categorizeFile(name: string): { key: string; name: string; icon: string; order: number } {
-  const n = name.toLowerCase();
+/** 빈 그룹 안내 문구. */
+function emptyHint(key: string): string {
+  if (key === 'sandbox') return '아직 없어요 · 채팅에서 "한번 만들어봐" 하면 여기에 떠요 (docs/design/ 직속에 저장)';
+  return '아직 없어요 · docs/design/screenshots/ 에 .html 시안을 두면 떠요';
+}
 
-  if (n.includes('mockup')) {
-    return { key: 'mockup', name: 'Mockup · 검증 단계', icon: '🧪', order: 90 };
-  }
-  if (n.startsWith('sidebar')) {
-    return { key: 'sidebar', name: '사이드바', icon: '📊', order: 10 };
-  }
-  if (n.startsWith('webview-plan')) {
-    return { key: 'plan', name: 'Webview · Plan', icon: '🗺️', order: 20 };
-  }
-  if (n.startsWith('webview-spec')) {
-    return { key: 'spec', name: 'Webview · Spec', icon: '📋', order: 30 };
-  }
-  if (n.startsWith('webview-preview')) {
-    return { key: 'preview', name: 'Webview · Preview', icon: '🖼️', order: 40 };
-  }
-  if (n.startsWith('webview-errors')) {
-    return { key: 'errors', name: 'Webview · Errors', icon: '⚠️', order: 50 };
-  }
-  if (n.startsWith('webview')) {
-    return { key: 'webview', name: 'Webview · 기타', icon: '🪟', order: 60 };
-  }
-  return { key: 'other', name: '기타', icon: '📄', order: 100 };
+// 두 고정 카테고리 (항상 표시). screenshots/ = 컴포넌트 디자인(구현 계약), 그 밖 = 자유 실험.
+const DESIGN_CAT = { key: 'design', name: '각 컴포넌트 디자인', icon: '📐', order: 10 };
+const SANDBOX_CAT = { key: 'sandbox', name: '자유 실험', icon: '🧪', order: 20 };
+
+function categorizeFile(relativePath: string): { key: string; name: string; icon: string; order: number } {
+  return relativePath.toLowerCase().includes('/screenshots/') ? DESIGN_CAT : SANDBOX_CAT;
 }
 
 function simpleHash(s: string): number {

@@ -4,6 +4,7 @@
 docs/**
 plans/**
 .blueprint/**
+.orchestration/**
 skills/**
 test/**
 .qa-tmp/**

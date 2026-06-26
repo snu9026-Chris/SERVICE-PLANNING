@@ -5,6 +5,8 @@
 > 범위: 빌드 / 파서 / Webview 5탭(Plan·Spec·Preview·QA·Errors) / 활동바 배지(JTBD3) / 디자인 토큰(JTBD5) / BUILD TARGET(ADR-016) / 파일 watch / 패키징
 > 단방향 원칙: 이 파일이 진실 원본 → QA 탭이 시각화만 (extension은 QA를 실행하지 않음, ADR-002)
 > 보기: 섹션을 눌러 펼치기(노션식 토글). 문제 있는 섹션은 자동 펼침.
+>
+> **재검증 메모 (2026-06-23, v0.17.0)**: 아래 "알려진 백로그" ⚠️ 3건은 이후 버전에서 해결됨 — 키보드 내비·affordance는 v0.14.0(Enter/Space+`role`/`tabindex`, `.phase-chevron`+cursor), 트리거 배지는 computeTriggerBadge로 구현. 헤드리스 검증 한계(아래 ℹ️)는 테스트 방식상 본질적 caveat(결함 아님). 현재 자동 하네스 **221/221 PASS**. 전체 리포트 재생성은 다음 `/qa` 때.
 
 ## 빌드 · 컴파일
 - ✅ TypeScript 타입체크 통과 — `tsc --noEmit` 에러 0
@@ -79,7 +81,7 @@
 - ✅ `docs/**/*.md` watch 글롭이 `docs/qa.report.md` 커버 (watcher.ts)
 - ✅ `handleFileChange` 에 qaReport 케이스 + `loadAll` 초기 로드 배선
 - ✅ 단방향 유지 — QA 탭은 read-only, .md 역기록 없음 (ADR-003)
-- ⚠️ Extension Host 런타임 검증은 헤드리스 불가 — activation·watch 실발화는 정적(코드+타입) 확인까지. 실측은 F5 디버그 세션에서 dogfooding 권고
+- ℹ️ Extension Host 런타임 검증은 헤드리스 불가 — activation·watch 실발화는 정적(코드+타입) 확인까지. 실측은 F5 디버그 세션에서 dogfooding 권고 (테스트 방식상 본질적 caveat, 결함 아님)
 
 ## 패키징
 - ✅ `vsce package` 성공 — blueprint-dashboard-0.9.6.vsix (11 files, 2.06MB)
@@ -87,10 +89,10 @@
 - ✅ **결함 발견·수정 ②**: 개발 메타파일 `DIGEST.md`·`CLAUDE.md`·`HISTORY.md` 가 .vsix에 포함 → `.vscodeignore` 추가로 제외 (최종 **10 files**, 2.06MB)
 - ✅ 재실행 가능 QA 하네스 정착 — `npm run qa` (exit 0/1로 CI 게이트 가능)
 
-## 알려진 백로그 (출시 차단 아님, UX-QUALITY.md 추적)
-- ⚠️ 사이드바 phase 항목 키보드 내비게이션(a11y) 미흡 — Phase 4.5 UX-REVIEW 지적
-- ⚠️ phase 클릭이 가능하다는 affordance(커서·hover) 약함
-- ⚠️ JBT3 트리거 배지 시각 강조 보강 여지
+## 알려진 백로그 (이후 버전에서 해결됨)
+- ✅ 사이드바 phase 키보드 내비게이션 — v0.14.0 해결 (Enter/Space + `role="button"`/`tabindex="0"`)
+- ✅ phase 클릭 affordance — v0.14.0 해결 (`.phase-chevron` `›` + cursor:pointer + hover)
+- ✅ JBT3 트리거 배지 — computeTriggerBadge로 활동바 배지 구현 (quiet 모드 연동)
 
 ## 종합
 - ✅ 자동 하네스 **142/142 PASS**, 타입체크·빌드·패키징 전부 통과, FAIL 0

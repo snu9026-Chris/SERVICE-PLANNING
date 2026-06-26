@@ -88,14 +88,17 @@
 
 ### 화면 2: Center Webview (큰 캔버스, 의도해서 봄)
 
-탭 4개 (사용자 클릭으로 전환):
+탭 (사용자 클릭으로 전환, 현재 8개):
 
 | # | 페이지 | 어느 JBT? | 데이터 소스 |
 |---|---|---|---|
 | 1 | **Plan** (첫 탭) | 큰 그림 + 현재 위치 | `plans/roadmap.md` + `.blueprint/state.md` |
 | 2 | **Spec** | JBT #4 (산출물 시각화) | `docs/PRODUCT.md`, `DESIGN.md`, `ARCHITECTURE.md` |
-| 3 | **Preview** | JBT #5 (디자인 시안) | Claude push (`blueprint.preview` 명령으로 임시 표시, 적립 X) |
-| 4 | **Errors** | (인지과부하 ↓) | `docs/error.history.md` (없으면 생성 버튼) |
+| 3 | **UX Flow** | 사용자 여정 가시화 | `docs/UX-FLOW.md` (여정 그래프, ADR-020) |
+| 4 | **Preview** | JBT #5 (디자인 시안) | **자유 실험**(`docs/design/` 갤러리 + push) ↔ **기능 명세**(`docs/UX-FLOW.md` 단계별) 토글 |
+| 5 | **QA** | (출시 전 검증) | `docs/qa.report.md` |
+| 6 | **Errors** | (인지과부하 ↓) | `docs/error.history.md` (없으면 생성 버튼) |
+| 7 | **Guide** | (도구 사용법) | 확장 내장 문서 (ADR-017) |
 
 상호작용:
 - 사이드바 Phase 클릭 → 자동으로 Spec 탭 + 해당 .md 섹션으로 이동

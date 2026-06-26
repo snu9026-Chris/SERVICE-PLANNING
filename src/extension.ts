@@ -16,7 +16,9 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { FileWatcher } from './file-watcher/watcher';
+import { DiagnosticsCollector, formatAutoErrorsMarkdown } from './diagnostics/collector';
 import { parseState } from './parser/state';
+import { parseUxFlow } from './parser/ux-flow';
 import { detectBuildTarget } from './parser/build-target';
 import { SidebarViewProvider, SIDEBAR_VIEW_ID } from './sidebar/sidebar-view-provider';
 import { BlueprintWebviewPanel, TabId } from './webview/panel';
@@ -28,16 +30,20 @@ import {
   ActiveFileInfo,
   BuildTarget,
   PackageJsonShape,
+  AutoErrorEntry,
   getActivePhaseOrNull,
   incompletePhaseItems,
 } from './types';
 
 let watcher: FileWatcher | undefined;
+let diagnosticsCollector: DiagnosticsCollector | undefined;
 let sidebarProvider: SidebarViewProvider | undefined;
 let webviewPanel: BlueprintWebviewPanel | undefined;
 let currentState: BlueprintState | null = null;
 let currentRoadmap: string | null = null;
 let currentFolder: vscode.WorkspaceFolder | undefined;
+/** error.auto.md 마지막 직렬화 내용 — 동일하면 재쓰기 생략(디스크/watcher 부담↓, ADR-021) */
+let lastAutoErrorsMd: string | null = null;
 /** 자동감지된 산출물 타입 (state.md 명시 필드 없을 때 fallback, ADR-016) */
 let detectedBuildTarget: BuildTarget | null = null;
 
@@ -49,9 +55,11 @@ const RELATIVE_PATHS = {
   feasibility: 'docs/FEASIBILITY.md',
   design: 'docs/DESIGN.md',
   architecture: 'docs/ARCHITECTURE.md',
+  uxFlow: 'docs/UX-FLOW.md',
   uxQuality: 'docs/UX-QUALITY.md',
   qaReport: 'docs/qa.report.md',
   errorHistory: 'docs/error.history.md',
+  errorAuto: 'docs/error.auto.md',
 };
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
@@ -84,6 +92,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   watcher.on('file-changed', (event: FileChangeEvent) => {
     void handleFileChange(event);
   });
+
+  // ── Diagnostics 자동 수집 (ADR-021) ──
+  // 빨간줄(severity=Error)·태스크 실패를 구독해 error.auto.md로 직렬화.
+  // 워크스페이스 폴더가 있을 때만 동작(위 67행 가드에서 폴더 없으면 이미 return).
+  diagnosticsCollector = new DiagnosticsCollector(currentFolder, (entries) => {
+    void writeAutoErrors(entries);
+  });
+  diagnosticsCollector.start();
 
   // ── 활성 에디터 변경 ──
   context.subscriptions.push(
@@ -119,8 +135,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push({
     dispose: () => {
       watcher?.dispose();
+      diagnosticsCollector?.dispose();
       webviewPanel?.dispose();
       watcher = undefined;
+      diagnosticsCollector = undefined;
       webviewPanel = undefined;
       sidebarProvider = undefined;
       currentState = null;
@@ -161,6 +179,9 @@ async function handleFileChange(event: FileChangeEvent): Promise<void> {
     case RELATIVE_PATHS.architecture:
       await reloadArtifact('architecture');
       break;
+    case RELATIVE_PATHS.uxFlow:
+      await reloadUxFlow();
+      break;
     case RELATIVE_PATHS.uxQuality:
       await reloadArtifact('uxQuality');
       break;
@@ -169,6 +190,9 @@ async function handleFileChange(event: FileChangeEvent): Promise<void> {
       break;
     case RELATIVE_PATHS.errorHistory:
       await reloadErrorHistory();
+      break;
+    case RELATIVE_PATHS.errorAuto:
+      await reloadErrorAuto();
       break;
     default:
       if (rel.startsWith('docs/design/') && rel.endsWith('.html')) {
@@ -204,9 +228,11 @@ async function loadAll(): Promise<void> {
     reloadArtifact('feasibility'),
     reloadArtifact('design'),
     reloadArtifact('architecture'),
+    reloadUxFlow(),
     reloadArtifact('uxQuality'),
     reloadQaReport(),
     reloadErrorHistory(),
+    reloadErrorAuto(),
     reloadDesignFiles(),
     reloadSpecExtras(),
     reloadBuildTarget(),
@@ -341,6 +367,13 @@ async function reloadArtifact(kind: 'inquiry' | 'product' | 'feasibility' | 'des
   webviewPanel?.setSpecArtifacts({ [kind]: md });
 }
 
+/** docs/UX-FLOW.md → 파싱(UxFlow) → UX Flow 탭 ① 흐름 + ② 큰 시안 (ADR-020·022). */
+async function reloadUxFlow(): Promise<void> {
+  if (!currentFolder) return;
+  const md = await readFileSafe(currentFolder, RELATIVE_PATHS.uxFlow);
+  webviewPanel?.setUxFlow(parseUxFlow(md));
+}
+
 async function reloadQaReport(): Promise<void> {
   if (!currentFolder) return;
   const md = await readFileSafe(currentFolder, RELATIVE_PATHS.qaReport);
@@ -351,6 +384,30 @@ async function reloadErrorHistory(): Promise<void> {
   if (!currentFolder) return;
   const md = await readFileSafe(currentFolder, RELATIVE_PATHS.errorHistory);
   webviewPanel?.setErrorHistory(md);
+}
+
+async function reloadErrorAuto(): Promise<void> {
+  if (!currentFolder) return;
+  const md = await readFileSafe(currentFolder, RELATIVE_PATHS.errorAuto);
+  webviewPanel?.setErrorAuto(md);
+}
+
+/**
+ * 자동 수집 스냅샷 → error.auto.md 직렬화 (ADR-021의 유일한 파생 쓰기).
+ * 내용이 직전과 같으면 디스크 쓰기 생략. 쓰기 후엔 file-watcher가 잡아 패널을 갱신.
+ */
+async function writeAutoErrors(entries: AutoErrorEntry[]): Promise<void> {
+  if (!currentFolder) return;
+  const md = formatAutoErrorsMarkdown(entries);
+  if (md === lastAutoErrorsMd) return;
+  lastAutoErrorsMd = md;
+  const fullPath = path.join(currentFolder.uri.fsPath, RELATIVE_PATHS.errorAuto);
+  try {
+    await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
+    await fs.promises.writeFile(fullPath, md, 'utf-8');
+  } catch {
+    // 쓰기 실패는 조용히 무시 — 자동 수집은 best-effort
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -450,8 +507,10 @@ async function readFileSafe(folder: vscode.WorkspaceFolder, relPath: string): Pr
 
 export function deactivate(): void {
   watcher?.dispose();
+  diagnosticsCollector?.dispose();
   webviewPanel?.dispose();
   watcher = undefined;
+  diagnosticsCollector = undefined;
   webviewPanel = undefined;
   sidebarProvider = undefined;
   currentState = null;

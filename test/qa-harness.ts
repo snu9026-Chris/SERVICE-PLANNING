@@ -6,14 +6,17 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { parseState } from '../src/parser/state';
+import { parseUxFlow } from '../src/parser/ux-flow';
 import { getProgress, computeTriggerBadge, BlueprintState } from '../src/types';
 import { renderPlanPage } from '../src/webview/pages/plan';
 import { renderSpecPage } from '../src/webview/pages/spec';
 import { renderPreviewPage } from '../src/webview/pages/preview';
+import { renderFlowPage } from '../src/webview/pages/flow';
 import { extractDesignTokens } from '../src/webview/design-tokens';
 import { detectBuildTarget, explicitBuildTarget } from '../src/parser/build-target';
 import { renderQaPage } from '../src/webview/pages/qa';
 import { renderErrorsPage } from '../src/webview/pages/errors';
+import { formatAutoErrorsMarkdown } from '../src/diagnostics/format';
 import { renderGuidePage } from '../src/webview/pages/guide';
 import { getActivePhaseOrNull, incompletePhaseItems, missingCanonicalPhases } from '../src/types';
 
@@ -109,6 +112,8 @@ try {
   };
   htmlSane(S, '전체 산출물', renderSpecPage(artifacts, undefined, undefined), ['NON-GOALS']);
   htmlSane(S, 'product 포커스', renderSpecPage(artifacts, undefined, 'product'));
+  // DESIGN.md 폴더 아래 DESIGN TOKENS 전용 노드 — 선택 시 우측에 토큰 스와치 패널
+  htmlSane(S, 'DESIGN TOKENS 노드', renderSpecPage(artifacts, 'design:__tokens__'), ['DESIGN TOKENS', 'token-chip']);
   htmlSane(S, '전부 null', renderSpecPage({ inquiry: null, product: null, feasibility: null, design: null, architecture: null, uxQuality: null }, undefined, undefined));
 } catch (e) {
   fail('Webview · Spec 탭', `예외: ${String(e)}`);
@@ -129,10 +134,6 @@ try {
     { relativePath: 'docs/design/b.html', name: 'b.html', content: '<i>b</i>' },
   ];
   htmlSane(S, '상세 prev/next', renderPreviewPage({ html: '<h1>a</h1>', sourcePath: 'docs/design/a.html', pushedAt: new Date(0) }, navFiles), ['preview-nav', '1 / 2']);
-  // DESIGN.md 토큰 패널이 그리드에 함께 렌더되는지 (실제 DESIGN.md 사용)
-  const designMd = readOpt('docs/DESIGN.md');
-  const withTokens = renderPreviewPage({ html: null, sourcePath: null, pushedAt: null }, [], designMd);
-  htmlSane(S, '토큰 패널 포함 그리드', withTokens, ['DESIGN TOKENS', 'token-chip']);
 } catch (e) {
   fail('Webview · Preview 탭', `예외: ${String(e)}`);
 }
@@ -325,13 +326,45 @@ try {
   fail('BUILD TARGET (ADR-016)', `예외: ${String(e)}`);
 }
 
-// ── 6) Errors 페이지 ─────────────────────────────────────
+// ── 6) Errors 페이지 (자동/수동 2섹션, ADR-021) ───────────
 try {
   const S = 'Webview · Errors 탭';
-  htmlSane(S, '히스토리 없음', renderErrorsPage(null), ['에러 히스토리']);
-  htmlSane(S, '히스토리 있음', renderErrorsPage('# Error History\n\n## 2026-06-09 12:00 — 샘플\n- Status: RESOLVED'), ['에러 히스토리']);
+  // 둘 다 없음 → 자동/수동 섹션 + 수동 생성 CTA
+  htmlSane(S, '둘 다 없음', renderErrorsPage(null, null), ['자동 수집', '수동 일지', '에러 히스토리 시작']);
+  // 수동만 있음
+  htmlSane(S, '수동 있음', renderErrorsPage('# Error History\n\n## 2026-06-09 12:00 — 샘플\n- Status: RESOLVED', null), ['수동 일지', '샘플']);
+  // 자동만 있음
+  htmlSane(S, '자동 있음', renderErrorsPage(null, '# Error History (자동 수집)\n\n## 진단 에러 (1)\n\n### src/x.ts\n\n- [L3] 타입 오류'), ['자동 수집', '타입 오류']);
 } catch (e) {
   fail('Webview · Errors 탭', `예외: ${String(e)}`);
+}
+
+// ── 6.5) 자동 에러 포맷터 (ADR-021) ──────────────────────
+try {
+  const S = '자동 에러 수집 (ADR-021)';
+  // 빈 입력 → "없습니다" 안내, throw 없음
+  const empty = formatAutoErrorsMarkdown([]);
+  assert(S, empty.includes('없습니다'), '빈 입력 → 없음 안내');
+  // 진단 1건 → 파일/줄/메시지/source 직렬화
+  const diag = formatAutoErrorsMarkdown([
+    { kind: 'diagnostic', file: 'src/a.ts', line: 12, message: '세미콜론 누락', source: 'ts' },
+  ]);
+  assert(S, diag.includes('src/a.ts'), '진단: 파일 경로 포함');
+  assert(S, diag.includes('L12'), '진단: 줄 번호 포함');
+  assert(S, diag.includes('세미콜론 누락') && diag.includes('(ts)'), '진단: 메시지+source 포함');
+  // 태스크 실패 → 별도 묶음
+  const task = formatAutoErrorsMarkdown([
+    { kind: 'task', file: null, line: null, message: 'build (exit 1)', source: 'build' },
+  ]);
+  assert(S, task.includes('Task 실패') && task.includes('build (exit 1)'), '태스크: 실패 묶음 포함');
+  // 같은 파일 다중 진단 → 한 파일 그룹 아래
+  const grouped = formatAutoErrorsMarkdown([
+    { kind: 'diagnostic', file: 'src/b.ts', line: 1, message: 'err1', source: null },
+    { kind: 'diagnostic', file: 'src/b.ts', line: 9, message: 'err2', source: null },
+  ]);
+  assert(S, (grouped.match(/### src\/b\.ts/g) ?? []).length === 1, '같은 파일은 그룹 1개');
+} catch (e) {
+  fail('자동 에러 수집 (ADR-021)', `예외: ${String(e)}`);
 }
 
 // ── 7) Guide 페이지 (ADR-017) ────────────────────────────
@@ -365,6 +398,57 @@ try {
   assert(S, missingCanonicalPhases(full.phases).length === 0, '전체 캐노니컬 있으면 미반영 0');
 } catch (e) {
   fail('types 헬퍼', `예외: ${String(e)}`);
+}
+
+// ── 9) UX Flow — 파서 + UX Flow 탭 (① 흐름 + ② 큰 시안, ADR-022) ──
+try {
+  const S = 'UX Flow (ADR-022)';
+
+  // 빈/깨진 입력 회복성 — null 반환
+  assert(S, parseUxFlow(null) === null, 'null 입력 → null');
+  assert(S, parseUxFlow('') === null, '빈 문자열 → null');
+  assert(S, parseUxFlow('# 제목만\n\n> 소개\n') === null, '단계(##) 없으면 → null');
+
+  // 실제 시드 파싱
+  const md = readOpt('docs/UX-FLOW.md');
+  assert(S, md !== null, 'docs/UX-FLOW.md 존재');
+  const flow = parseUxFlow(md);
+  assert(S, flow !== null && flow.steps.length >= 2, `여정 단계 파싱됨 (${flow?.steps.length ?? 0}개, 기대 ≥2)`);
+  if (flow) {
+    assert(S, flow.steps.every(s => typeof s.index === 'number' && s.label.length > 0), '모든 단계에 index·label 존재');
+    const hasFeat = flow.steps.some(s => s.features.length > 0);
+    assert(S, hasFeat, '최소 한 단계에 기능 있음');
+    const hasRef = flow.steps.some(s => !!s.designRef);
+    assert(S, hasRef, '최소 한 단계에 시안 매칭(designRef) 있음');
+  }
+
+  // 형식 단위 파싱 — 번호·요약·시안·묻기/정하기/채워짐/산출물·기능·상태칩 (ADR-022)
+  const sample = parseUxFlow(
+    '# UX Flow — 샘플\n> 인트로\n## 1. 진입\n> 첫 화면\n- 시안: webview-x.html\n- 묻기: 뭐 만들래\n- 정하기: 범위\n- 채워짐: Spec 탭\n- 산출물: docs/x.md\n### 기능\n- 히어로 — 가치 제안 [핵심]\n- 예시 — 갤러리 [예정]\n## 2. 완료\n- 내보내기 — 파일 저장 [완료]\n',
+  );
+  assert(S, sample?.title === 'UX Flow — 샘플', `제목 파싱 (실측: ${sample?.title})`);
+  assert(S, sample?.intro === '인트로', '인트로 파싱');
+  assert(S, sample?.steps.length === 2, `단계 2개 (실측: ${sample?.steps.length})`);
+  const st1 = sample?.steps[0];
+  assert(S, st1?.index === 1 && st1?.label === '진입', `1단계 번호·이름 (실측: ${st1?.index}/${st1?.label})`);
+  assert(S, st1?.summary === '첫 화면', '단계 요약 파싱');
+  assert(S, st1?.designRef === 'webview-x.html', `시안 매칭 파싱 (실측: ${st1?.designRef})`);
+  assert(S, st1?.ask === '뭐 만들래' && st1?.decide === '범위' && st1?.fills === 'Spec 탭' && st1?.output === 'docs/x.md', '묻기/정하기/채워짐/산출물 파싱 (ADR-022)');
+  assert(S, st1?.features.length === 2, `기능 2개 (실측: ${st1?.features.length})`);
+  assert(S, st1?.features[0].name === '히어로' && st1?.features[0].desc === '가치 제안' && st1?.features[0].status === 'core', '기능 이름·설명·상태(핵심→core) 파싱');
+  assert(S, sample?.steps[1].features[0].status === 'done', '상태 완료→done 파싱');
+
+  // UX Flow 탭 렌더 (ADR-022) — 빈 + 미니지도·① 흐름·② 큰 시안
+  htmlSane(S, 'Flow 빈 상태', renderFlowPage(null), ['UX-FLOW.md']);
+  const dfiles = [{ relativePath: 'docs/design/screenshots/webview-x.html', name: 'webview-x.html', content: '<h1>x</h1>' }];
+  htmlSane(S, 'Flow 렌더', renderFlowPage(flow, dfiles), ['uxf-map', 'uxf-tl', 'uxf-screen']);
+  // ① 흐름 상세행(묻기/정하기/채워짐/산출물)이 시드에 있으면 렌더됨
+  assert(S, renderFlowPage(flow, dfiles).includes('uxf-rk'), '① 흐름 상세행(묻기/정하기/채워짐/산출물) 렌더');
+  // ② 큰 시안 — 매칭 파일이면 클릭(data-preview-file) + iframe
+  const sampleFlow = renderFlowPage(sample, dfiles);
+  assert(S, sampleFlow.includes('uxf-screen-frame') && sampleFlow.includes('data-preview-file'), '② 큰 시안 매칭 → iframe + 클릭');
+} catch (e) {
+  fail('UX Flow (ADR-022)', `예외: ${String(e)}`);
 }
 
 // ── 결과 출력 ────────────────────────────────────────────

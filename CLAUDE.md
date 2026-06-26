@@ -29,8 +29,14 @@ PRODUCT.md 또는 ARCHITECTURE.md가 비어있거나 템플릿 그대로면 코�
 사용자와 상의해서 만드는 디자인 시안(HTML)은 **반드시 `docs/design/screenshots/<이름>.html` 파일로 저장**한다. 그러면 확장의 Preview 탭 갤러리에 자동으로 떠서, 카드를 클릭하면 우측 패널 안 iframe으로 인라인 렌더링된다.
 - **항상 HTML/CSS로 직접 작성한다.** PNG·스크린샷·이미지 파일·말로만 설명·브라우저 캡처는 금지 — *실제 만드는 프로그램과 같은 매체(살아있는 HTML)*로 그려야 Preview에 그대로 뜨고 시안=구현 간극이 없다. (갤러리는 `.html`만 수집하므로 이미지로 만들면 아예 안 보임)
 - 브라우저로 띄우거나(`/design-shotgun` 등) 임시 폴더에 두지 않는다 — 사용자는 Preview 패널에서 보길 원한다.
-- 파일명에 `mockup`이 들어가면 "Mockup · 검증 단계" 카테고리로, `sidebar`/`webview-*` prefix는 해당 카테고리로 자동 분류된다([preview.ts](src/webview/pages/preview.ts)의 `categorizeFile`).
+- 갤러리는 **폴더 경로**로 두 카테고리로 나뉜다([preview.ts](src/webview/pages/preview.ts)의 `categorizeFile`): `docs/design/screenshots/` 안은 "📐 UX 디자인 시안"(구현 계약), 그 밖(`docs/design/sandbox/` 등)은 "🧪 자유 실험". 정식 시안은 `screenshots/`에, 막 던져보는 실험은 `sandbox/`에 저장한다.
 - `docs/design/` 하위 어느 폴더든 `.html` 저장 시 갤러리가 즉시 갱신된다([extension.ts](src/extension.ts) `handleFileChange`).
+
+### 디자인 시안 ↔ 구현 일치 게이트 (design drift 방지)
+승인된 디자인 시안과 실제 구현이 어긋나는 것(design drift)을 막기 위해, **시안은 "디자인 계약(source of truth)"으로 취급**한다.
+- **IMPLEMENT(구현) 진입 시**: 그 기능이 따르는 승인 시안 파일을 **명시적으로 못박는다** — "이 기능의 디자인 계약은 `docs/design/screenshots/<파일>.html` 이다"를 plan 또는 응답에 적고 시작. 어느 시안이었는지 모호한 채로 코딩하지 않는다.
+- **REVIEW(검토) 게이트 (필수)**: 머지/SHIP 전에 **구현 결과를 그 승인 시안 HTML과 나란히 대조**한다. 시안도 살아있는 HTML이므로 눈대중이 아니라 실제로 띄워 비교 가능 — 레이아웃·간격·색·타이포·컴포넌트 단위로 **어긋난 점을 리스트업**하고, 일치하거나 사용자가 명시 승인하기 전까지 REVIEW 통과로 보지 않는다.
+- 시안과 다르게 가야 할 합당한 이유가 생기면, 말없이 바꾸지 말고 **시안 HTML을 먼저 갱신**하거나 사용자에게 `[승인 요청]`한다. 구현이 시안을 앞질러 가는 것을 금지.
 
 ## Blueprint integration
 

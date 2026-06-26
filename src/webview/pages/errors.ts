@@ -1,48 +1,67 @@
 /**
- * Errors 페이지 — docs/error.history.md 풀-너비 렌더.
+ * Errors 페이지 — 자동/수동 2섹션 (ADR-021).
  *
- * 파일 있으면: 풀-너비 마크다운 렌더
- * 파일 없으면: "에러 히스토리 시작" 버튼 → 클릭 시 extension에 메시지 보냄 → 파일 생성
+ * 위: 자동 수집(docs/error.auto.md) — 확장이 진단·Task 실패에서 자동 기록. 읽기 전용.
+ * 아래: 수동 일지(docs/error.history.md) — Claude/사용자가 남기는 트러블슈팅 기록.
+ *       파일 없으면 "에러 히스토리 시작" 버튼(extension이 템플릿 생성).
  */
 
 import { renderMarkdown, escapeHtml } from '../shared';
 
+const MANUAL_PATH = 'docs/error.history.md';
+const AUTO_PATH = 'docs/error.auto.md';
+
 export function renderErrorsPage(
-  errorMd: string | null,
-  filePath: string = 'docs/error.history.md',
+  manualMd: string | null,
+  autoMd: string | null = null,
 ): string {
-  if (!errorMd) {
-    return `
-      <div class="page-hero">
-        <div class="page-eyebrow">ERRORS</div>
-        <h1 class="page-title">에러 히스토리</h1>
-        <p class="page-subtitle">
-          <code>${escapeHtml(filePath)}</code> 파일이 아직 없습니다.
-        </p>
-      </div>
-
-      <div class="empty-card cta-card">
-        <p>발생한 에러, 원인, 해결을 시간순으로 누적하는 일지입니다.</p>
-        <button class="cta-button" data-action="create-error-history">
-          ✚ 에러 히스토리 시작
-        </button>
-        <p class="muted" style="margin-top: 12px;">
-          템플릿이 박힌 빈 파일을 만들어요. 이후 에러 발생 시 Claude에게 "에러히스토리에 추가해" 라고 하시면 됩니다.
-        </p>
-      </div>`;
-  }
-
   return `
     <div class="page-hero">
       <div class="page-eyebrow">ERRORS</div>
-      <h1 class="page-title">에러 히스토리</h1>
-      <p class="page-subtitle">
-        <code>${escapeHtml(filePath)}</code> · 최근 에러가 위에 누적됩니다.
-      </p>
+      <h1 class="page-title">에러</h1>
+      <p class="page-subtitle">위: 확장이 자동 수집 · 아래: 직접 남기는 트러블슈팅 일지</p>
     </div>
-    <div class="markdown-body errors-body">
-      ${renderMarkdown(errorMd)}
-    </div>`;
+    ${renderAutoSection(autoMd)}
+    ${renderManualSection(manualMd)}`;
+}
+
+/** 자동 수집 섹션 — error.auto.md 렌더. 없으면 "확장이 자동으로 채웁니다" 안내. */
+function renderAutoSection(autoMd: string | null): string {
+  const body = autoMd
+    ? `<div class="markdown-body errors-body">${renderMarkdown(autoMd)}</div>`
+    : `<div class="empty-card">
+         <p class="muted">아직 자동 수집된 에러가 없습니다. 컴파일·린트 에러나 빌드 실패가 생기면 확장이 <code>${escapeHtml(AUTO_PATH)}</code>에 자동으로 기록합니다.</p>
+       </div>`;
+  return `
+    <section class="errors-block">
+      <div class="preview-category-header">
+        <span class="preview-category-icon">🤖</span>
+        <span class="preview-category-name">자동 수집</span>
+      </div>
+      ${body}
+    </section>`;
+}
+
+/** 수동 일지 섹션 — error.history.md 렌더. 없으면 생성 CTA. */
+function renderManualSection(manualMd: string | null): string {
+  const body = manualMd
+    ? `<div class="markdown-body errors-body">${renderMarkdown(manualMd)}</div>`
+    : `<div class="empty-card cta-card">
+         <p>발생한 에러, 원인, 해결을 시간순으로 누적하는 일지입니다.</p>
+         <button class="cta-button" data-action="create-error-history">✚ 에러 히스토리 시작</button>
+         <p class="muted" style="margin-top: 12px;">
+           템플릿이 박힌 빈 파일을 만들어요. 이후 에러 발생 시 Claude에게 "에러히스토리에 추가해" 라고 하시면 됩니다.
+         </p>
+       </div>`;
+  return `
+    <section class="errors-block">
+      <div class="preview-category-header">
+        <span class="preview-category-icon">📓</span>
+        <span class="preview-category-name">수동 일지</span>
+        <span class="preview-category-count" style="font-weight:400;opacity:.6;">${escapeHtml(MANUAL_PATH)}</span>
+      </div>
+      ${body}
+    </section>`;
 }
 
 /**

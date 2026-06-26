@@ -1148,6 +1148,11 @@ li.spec-folder.open > .spec-folder-row > .spec-chevron {
   font-variant-numeric: tabular-nums;
 }
 
+.preview-category-empty {
+  font-size: 12.5px; color: #8e8e93; padding: 18px 16px; border: 1px dashed #d4d8df;
+  border-radius: 12px; background: #fafbfc;
+}
+
 /* Preview — DESIGN TOKENS 패널 (JTBD5, DESIGN.md 자동 추출) */
 
 .preview-tokens {
@@ -2497,3 +2502,104 @@ html, body {
 .guide-d-out { margin-top: 12px; font-size: 12px; color: #6b7280; }
 .guide-d-out code { background: #f1f3f6; padding: 1px 6px; border-radius: 5px; color: #be123c; }
 @media (max-width: 720px) { .guide-pipeline { grid-template-columns: 1fr; } .guide-detail-wrap { position: static; } }
+
+/* ═══════════════════════════════════════════════════════════════
+ * UX Flow 탭 (ADR-022) — 미니 지도 + ① 흐름 타임라인 + ② 단계별 큰 시안
+ * ═══════════════════════════════════════════════════════════════ */
+
+/* 미니 지도 — 전체 순서 한 줄 */
+.uxf-map {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap; max-width: 760px;
+  background: #fff; border: 1px solid #e4e7ec; border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); padding: 12px 14px; margin-bottom: 22px;
+}
+.uxf-mstep { display: flex; align-items: center; gap: 7px; }
+.uxf-mdot {
+  width: 24px; height: 24px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  font-size: 11px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, #007aff, #5856d6);
+}
+.uxf-mstep.end .uxf-mdot { background: linear-gradient(135deg, #34c759, #30b0c7); }
+.uxf-mname { font-size: 11.5px; font-weight: 600; color: #3a3a3c; }
+.uxf-marr { color: #b9c4d6; font-size: 12px; }
+
+/* 섹션 헤더 (①/②) */
+.uxf-sec { max-width: 760px; margin-bottom: 30px; }
+.uxf-sec-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 13px; flex-wrap: wrap; }
+.uxf-sec-t { font-size: 15px; font-weight: 800; color: #1d1d1f; letter-spacing: -0.01em; }
+.uxf-sec-d { font-size: 11.5px; color: #8e8e93; }
+
+/* ① 전체 흐름 — 세로 타임라인 */
+.uxf-tl { position: relative; padding-left: 42px; }
+.uxf-tl::before {
+  content: ""; position: absolute; left: 17px; top: 12px; bottom: 12px; width: 2px;
+  background: linear-gradient(180deg, #007aff, #5856d6 55%, #34c759); opacity: 0.4; border-radius: 2px;
+}
+.uxf-node { position: relative; margin-bottom: 14px; }
+.uxf-badge {
+  position: absolute; left: -42px; top: 0; width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 15px; font-weight: 800; color: #fff;
+  font-variant-numeric: tabular-nums; z-index: 1; border: 3px solid #f4f5f7;
+  background: linear-gradient(135deg, #007aff, #5856d6); box-shadow: 0 3px 8px rgba(0, 122, 255, 0.28);
+}
+.uxf-node.end .uxf-badge { background: linear-gradient(135deg, #34c759, #30b0c7); box-shadow: 0 3px 8px rgba(52, 199, 89, 0.28); }
+.uxf-card {
+  background: #fff; border: 1px solid #e7eaf0; border-radius: 14px; padding: 14px 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+.uxf-nm { font-size: 15.5px; font-weight: 800; letter-spacing: -0.01em; color: #1d1d1f; }
+.uxf-node.start .uxf-nm::after { content: " · 시작"; color: #007aff; font-size: 11px; font-weight: 700; }
+.uxf-node.end .uxf-nm::after { content: " 🏁"; }
+.uxf-sum { font-size: 12.5px; color: #5b5b60; margin: 5px 0 0; line-height: 1.55; }
+.uxf-rows { border-top: 1px solid #f0f1f3; margin-top: 11px; padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.uxf-r { display: flex; gap: 10px; align-items: baseline; }
+.uxf-rk {
+  flex: none; width: 50px; font-size: 10px; font-weight: 800; color: #fff; text-align: center;
+  padding: 2px 0; border-radius: 5px;
+}
+.uxf-rk.k-ask { background: #af52de; }
+.uxf-rk.k-dec { background: #007aff; }
+.uxf-rk.k-fill { background: #34c759; }
+.uxf-rk.k-out { background: #ff9500; }
+.uxf-rv { font-size: 12px; color: #3a3a3c; flex: 1; line-height: 1.5; }
+
+/* ② 단계별 화면 — 큰 시안 (클릭 → Preview 확대) */
+.uxf-step { margin-bottom: 26px; }
+.uxf-step-h { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.uxf-step-num {
+  width: 26px; height: 26px; flex: none; border-radius: 8px; display: grid; place-items: center;
+  font-size: 12px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, #007aff, #5856d6);
+}
+.uxf-step-nm { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; color: #1d1d1f; }
+.uxf-step-desc { font-size: 13px; color: #44454a; margin: 2px 0 12px 36px; line-height: 1.6; }
+
+.uxf-screen {
+  display: block; position: relative; width: 100%; height: 340px; padding: 0;
+  border: 1px solid #d9dde4; border-radius: 14px; overflow: hidden; background: #eef0f4;
+  cursor: zoom-in; box-shadow: 0 3px 14px rgba(0, 0, 0, 0.08);
+}
+.uxf-screen:hover .uxf-zoom { opacity: 1; transform: translateY(0); }
+.uxf-zoom {
+  position: absolute; top: 12px; right: 12px; z-index: 5; opacity: 0; transform: translateY(-4px);
+  transition: 0.15s; background: rgba(0, 0, 0, 0.66); color: #fff; font-size: 11.5px; font-weight: 700;
+  padding: 6px 12px; border-radius: 20px;
+}
+.uxf-tag {
+  position: absolute; bottom: 11px; right: 12px; z-index: 5;
+  background: rgba(0, 0, 0, 0.5); color: #fff; font-size: 9px; font-weight: 800;
+  letter-spacing: 0.08em; padding: 3px 9px; border-radius: 5px;
+}
+.uxf-screen-frame {
+  position: absolute; top: 0; left: 0; width: 250%; height: 250%;
+  transform: scale(0.4); transform-origin: top left; border: none; background: #fff; pointer-events: none;
+}
+.uxf-screen-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: default; height: 200px; }
+.uxf-screen-ic { font-size: 34px; opacity: 0.5; }
+.uxf-screen-hint { font-size: 11px; color: #b0b3b9; word-break: break-all; padding: 0 12px; text-align: center; }
+.uxf-feat-line { margin: 10px 0 0 36px; font-size: 12px; color: #8e8e93; }
+.uxf-feat-line b { color: #3a3a3c; font-weight: 700; }
+
+@media (max-width: 720px) {
+  .uxf-screen { height: 240px; }
+}

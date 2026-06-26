@@ -4,6 +4,45 @@
 
 형식: [Keep a Changelog](https://keepachangelog.com/) + [Semantic Versioning](https://semver.org/).
 
+## [0.19.1] — 2026-06-26
+
+### Fixed
+- **Preview 두 그룹 항상 표시** — "각 컴포넌트 디자인 / 자유 실험"을 파일이 없어도 헤더로 노출(빈 그룹은 안내 문구). 자유 실험에 시안이 0개라 그룹이 통째로 안 보이던 문제 수정.
+- **code-review 후속 수정 7건** —
+  - Spec: DESIGN.md에 `##` 제목이 없어도 'DESIGN TOKENS' 노드가 보이게 (퇴행 복구).
+  - Diagnostics: 워크스페이스 경계 체크를 `path.relative` 기반으로 — 형제 폴더(`proj`/`proj-tests`) 에러 새던 것 차단.
+  - UX-Flow 파서: 기능 이름 속 ` - `(하이픈)에서 잘리던 문제(em대시 우선), `### 기능` 안 예약어(`산출물` 등) 이름 보존, 단계 뱃지 번호를 항상 문서 순서로.
+  - 정리: flow.ts 죽은 변수 제거, extension.ts stale 주석 정정.
+
+### Changed
+- **UX Flow 매칭 정리** — 1번(아이디어) 단계의 과한 기능 재배치(색·글꼴→3번, 안 만들 것→2번) + 3번(화면·디자인) 시안을 `webview-spec-design.html`로 교체(놀던 시안 활용).
+
+## [0.19.0] — 2026-06-26
+
+### Changed (UX Flow = blueprint 제작 과정으로 재정의)
+- **UX Flow 내용 교체** — "탭 둘러보기"(프로젝트 열기→Plan→…)가 아니라 **이 프로그램으로 제품이 만들어지는 과정**: 아이디어 꺼내기 → 무엇을 만들지 정하기 → 화면·디자인 잡기 → 구조 잡기 → 만들기 → 점검·출시.
+- **단계 상세 = 묻기/정하기/채워짐/산출물** — Claude가 무엇을 묻고, 같이 무엇을 정하고, 대시보드 어디가 채워지고, 무슨 파일이 나오는지 (파서 키·`UxFlowStep` 필드 `ask/decide/fills/output`).
+- **① 도식 ↔ ② 단계별 큰 시안 매칭** — 둘 다 같은 `UX-FLOW.md`에서 그려져 항상 같은 단계로 정렬. ② 큰 시안은 각 단계 매칭 화면(spec/plan/preview/architecture/sidebar/errors).
+- **Preview 갤러리 = 각 컴포넌트 디자인 / 자유 실험** 2그룹 (screenshots/ vs 그 외).
+- 하네스 **231/231 PASS** · 타입체크 통과.
+
+## [0.18.0] — 2026-06-26
+
+### Changed (UX Flow ↔ Preview 통합·역할 분리, ADR-022)
+- **UX Flow 탭 통합** — 한 탭에 ① 세로 흐름 타임라인(단계별 진입/화면/다음/상태) + ② 단계별 **큰 시안**(클릭하면 Preview에서 화면 가득 확대) + 미니 지도. 옛 노드만 있던 빈약한 그래프 대체.
+- **Preview 탭 = 시안 갤러리 전용** — 자유 실험↔기능 명세 세그먼트 토글 제거(`previewMode` 상태 삭제). 역할이 안 겹침.
+- **데이터 형식 확장** — `docs/UX-FLOW.md` 단계에 `진입/화면/다음/상태` 메타 불릿 추가(파서 `ux-flow.ts`, `UxFlowStep`). 설명 문구를 비개발자 친화 평이체로 재작성.
+- 하네스 **231/231 PASS** · 타입체크 통과.
+
+## [0.17.0] — 2026-06-23
+
+### Added (UX Flow 탭 + Preview 2모드, ADR-020)
+- **UX Flow 탭 신설** (Spec↔Preview 사이) — `docs/UX-FLOW.md`의 사용자 여정을 스크롤 없이 한눈에 보는 꺾인 경로형 그래프. 노드 = 번호+단계명+기능 개수, 시작/끝 강조.
+- **Preview 2모드 토글** — 진입 시 **자유 실험**(시안 갤러리+push) ↔ **기능 명세**(여정 단계별 화면시안+기능) 중 하나만. 한 페이지에 안 쌓음.
+- **단일 출처** — Flow 그래프와 Preview 기능 명세가 같은 `docs/UX-FLOW.md`(순수 파서 `ux-flow.ts`)에서 그려져 구조적으로 항상 일치.
+- **blueprint 스킬** DESIGN 단계에 **UX Flow 인터뷰** sub-step 추가 (제품별 여정을 질의해 UX-FLOW.md 생성).
+- 하네스 **221/221 PASS**. QA 탭 stale ⚠️ 3건 정리(v0.14.0/0.10.0에서 이미 해결).
+
 ## [0.16.0] — 2026-06-18
 
 ### Added (Preview 상세 뷰어 이전/다음 네비)

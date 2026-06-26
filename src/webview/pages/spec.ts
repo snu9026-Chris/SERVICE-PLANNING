@@ -8,6 +8,7 @@
  */
 
 import { extractSections, renderMarkdownSection, escapeHtml, MarkdownSection } from '../shared';
+import { extractDesignTokens } from '../design-tokens';
 
 export interface SpecExtraFile {
   /** 워크스페이스 상대 경로 — 예: 'docs/adr/ADR-001-foo.md' */
@@ -43,6 +44,9 @@ const FOLDER_LABELS: Record<string, string> = {
 };
 
 export type SpecFolderKey = 'inquiry' | 'product' | 'feasibility' | 'design' | 'architecture' | 'ux-quality' | 'adr' | 'design-gallery';
+
+/** DESIGN.md 폴더 아래 디자인 토큰 전용 노드의 가상 섹션 id (실제 ## 섹션이 아님) */
+const TOKENS_SECTION_ID = '__tokens__';
 
 /**
  * `${folder}:${sectionId}` 형식. 예: "product:non-goals"
@@ -125,9 +129,10 @@ export function renderSpecPage(
         <ul class="spec-children">${rows}</ul>
       </li>`;
     }
-    if (sections.length === 0) return '';
+    // design 폴더는 ## 섹션이 없어도(=DESIGN.md가 제목 없이 토큰만 있어도) TOKENS 노드는 보여야 한다.
+    if (sections.length === 0 && !(folder === 'design' && artifacts.design)) return '';
     const open = folder === activeFolder ? 'open' : '';
-    const rows = sections.map(s => {
+    let rows = sections.map(s => {
       const isActive = folder === activeFolder && s.id === activeSectionId ? 'active' : '';
       const icon = sectionIcon(folder, s.heading);
       return `<li><button type="button" class="spec-row ${isActive}" data-spec-select="${folder}:${s.id}">
@@ -135,6 +140,14 @@ export function renderSpecPage(
         <span class="spec-label">${escapeHtml(s.heading)}</span>
       </button></li>`;
     }).join('');
+    // DESIGN.md 폴더 맨 위에 디자인 토큰 전용 노드 — DESIGN.md에서 색·폰트를 자동 추출해 보여줌
+    if (folder === 'design') {
+      const isActive = activeFolder === 'design' && activeSectionId === TOKENS_SECTION_ID ? 'active' : '';
+      rows = `<li><button type="button" class="spec-row ${isActive}" data-spec-select="design:${TOKENS_SECTION_ID}">
+        <span class="spec-icon">🎨</span>
+        <span class="spec-label">DESIGN TOKENS</span>
+      </button></li>` + rows;
+    }
     return `<li class="spec-folder ${open}">
       <button type="button" class="spec-row spec-folder-row" data-spec-folder-toggle="${folder}">
         <span class="spec-chevron">▶</span>
@@ -208,6 +221,9 @@ export function renderSpecPage(
         contentHtml = `<div class="spec-empty-detail">파일을 찾을 수 없습니다</div>`;
       }
     }
+  } else if (activeFolder === 'design' && activeSectionId === TOKENS_SECTION_ID) {
+    // DESIGN TOKENS 전용 뷰 — DESIGN.md에서 자동 추출한 색·폰트 스와치 패널
+    contentHtml = renderDesignTokensContent(artifacts.design);
   } else {
     // 일반 폴더 (PRODUCT/DESIGN/ARCH/adr) — 섹션 콘텐츠
     const activeSections = folders.find(([k]) => k === activeFolder)?.[1] ?? [];
@@ -242,6 +258,55 @@ export function renderSpecPage(
         ${contentHtml}
       </main>
     </div>`;
+}
+
+/**
+ * DESIGN TOKENS 콘텐츠 — DESIGN.md에서 자동 추출한 색상 스와치 + 폰트 샘플 (JTBD5).
+ * 우측 콘텐츠 패널 안에 breadcrumb + 스와치 그리드로 렌더한다.
+ */
+function renderDesignTokensContent(designMarkdown: string | null): string {
+  const tokens = extractDesignTokens(designMarkdown);
+  const breadcrumb = `<div class="spec-breadcrumb">
+    <span>docs/</span>
+    <span class="spec-bc-sep">›</span>
+    <span>${escapeHtml(FOLDER_LABELS['design'])}</span>
+    <span class="spec-bc-sep">›</span>
+    <span class="spec-bc-leaf">DESIGN TOKENS</span>
+  </div>`;
+
+  if (tokens.colors.length === 0 && tokens.fonts.length === 0) {
+    return `${breadcrumb}<div class="spec-empty-detail">DESIGN.md에서 추출할 색상·폰트가 없습니다.</div>`;
+  }
+
+  const swatches = tokens.colors.map(c => {
+    const tip = c.label ? `${c.label} · ${c.value}` : c.value;
+    return `
+      <div class="token-swatch" title="${escapeHtml(tip)}">
+        <span class="token-chip"><span class="token-chip-fill" style="background:${escapeHtml(c.value)}"></span></span>
+        <span class="token-meta">
+          <span class="token-value">${escapeHtml(c.value)}</span>
+          ${c.label ? `<span class="token-label">${escapeHtml(c.label)}</span>` : ''}
+        </span>
+      </div>`;
+  }).join('');
+
+  const fonts = tokens.fonts.map(f => `
+    <div class="token-font">
+      <span class="token-font-sample" style="font-family:'${escapeHtml(f)}', 'Pretendard Variable', sans-serif">Aa 가나다 123</span>
+      <span class="token-font-name">${escapeHtml(f)}</span>
+    </div>`).join('');
+
+  return `${breadcrumb}
+    <section class="preview-tokens">
+      <div class="preview-category-header">
+        <span class="preview-category-icon">🎨</span>
+        <span class="preview-category-name">DESIGN TOKENS</span>
+        <span class="preview-category-count">${tokens.colors.length + tokens.fonts.length}</span>
+      </div>
+      <div class="token-subtitle">DESIGN.md에서 자동 추출 — 색상 ${tokens.colors.length} · 폰트 ${tokens.fonts.length}</div>
+      ${tokens.colors.length ? `<div class="token-swatches">${swatches}</div>` : ''}
+      ${tokens.fonts.length ? `<div class="token-fonts">${fonts}</div>` : ''}
+    </section>`;
 }
 
 function simpleHash(s: string): number {
